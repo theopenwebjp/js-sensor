@@ -1,0 +1,34 @@
+{
+  "coverage": "68.96%",
+  "expectCount": 29,
+  "actualCount": 20,
+  "files": {
+    "class/js-sensor.js": {
+      "expectCount": 3,
+      "actualCount": 1,
+      "undocumentLines": [
+        1,
+        8
+      ]
+    },
+    "class/raw-sensor-watcher.js": {
+      "expectCount": 6,
+      "actualCount": 5,
+      "undocumentLines": [
+        8
+      ]
+    },
+    "class/sensor-handler.js": {
+      "expectCount": 20,
+      "actualCount": 14,
+      "undocumentLines": [
+        1,
+        2,
+        10,
+        12,
+        15,
+        20
+      ]
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "name": "js-sensor",
+  "main": "./class/js-sensor.js",
+  "version": "1.0.0",
+  "description": "JavaScript abstract sensor library.",
+  "directories": {
+    "example": "example",
+    "test": "test"
+  },
+  "scripts": {
+    "esdoc": "./node_modules/.bin/esdoc -c ./.esdoc.json",
+    "eslint": "gulp eslint",
+    "browserify": "browserify ./class/js-sensor.js ./class/raw-sensor-watcher.js ./class/sensor-handler.js -o ./dist/bundle.js",
+    "build": "npm run browserify",
+    "build-all": "npm run build && npm run build-tests",
+    "build-tests": "browserify ./test/js-sensor.test.js ./test/raw-sensor-watcher.test.js ./test/sensor-handler.test.js -o ./dist/tests.js",
+    "test": "npm run build-all && npm run esdoc && npm run eslint && start ./test/mocha-html/index.html",
+    "example": "npm run build && start ./example/index.html",
+    "server": "browser-sync start --server"
+  },
+  "author": "Damien Golding",
+  "license": "MIT",
+  "devDependencies": {
+    "browser-sync": "^2.18.13",
+    "browserify": "^14.4.0",
+    "chai": "^4.1.2",
+    "esdoc": "^1.0.4",
+    "esdoc-standard-plugin": "^1.0.0",
+    "eslint": "^4.12.1",
+    "eslint-html-reporter": "^0.5.2",
+    "gulp": "^3.9.1",
+    "gulp-eslint": "^4.0.0",
+    "mocha": "^4.0.1"
+  }
+}

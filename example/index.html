@@ -1,0 +1,145 @@
+<html>
+    <head>
+        <title>JavaScript Sensor Abstraction js-sensor</title>
+        <style>
+            ul{
+                list-style: none;
+                margin: 0;
+                padding: 0;
+            }
+
+            li{
+                list-style: none;
+                margin: 0;
+                padding: 0;
+            }
+
+            #logs{
+                overflow: scroll;
+            }
+
+            .border-div{
+                margin: 10px;
+                padding: 10px;
+                border: 1px solid black;
+            }
+
+            body{
+                font-size: 100%;
+                width: 100%;
+            }
+
+            content{
+                width: 100%;
+            }
+
+            .large-selector{
+                font-size: xx-large;
+                margin: 5px 0;
+            }
+
+            .large-button{
+                font-size: xx-large;
+                margin: 5px 0;
+            }
+
+            h1{
+                display: block;
+                max-width: 90%;
+                font-size: 120%;
+            }
+        </style>
+        <script>
+            function domLogger(element){
+                if(!window.console){
+                    window.console = {
+                        log: function(){}
+                    };
+                }
+                if(!console._log){
+                    console._log = console.log;
+                };
+                console.log = function(){
+                    var MAX_LENGTH = 200;
+                    var text = JSON.stringify(arguments);
+                    text = text.substr(0, MAX_LENGTH);
+                    element.innerHTML = text + '<br>' + element.innerHTML;
+                };
+                console.log('domLogger test');
+            }
+        </script>
+        <script src='../dist/bundle.js'></script>
+        <script>
+            window.addEventListener('load', main);
+
+            function main(){
+                domLogger(document.getElementById('logs'));
+                const jsSensor = new JsSensor();
+                document.getElementById('watch').addEventListener('click', ()=>{
+                    let sensorName = document.getElementById('sensors').value;
+                    if(sensorName === 'All'){
+                        jsSensor.watchAll();
+                    }else{
+                        jsSensor.watch(sensorName);
+                    }
+                });
+                document.getElementById('stop').addEventListener('click', ()=>{
+                    let sensorName = document.getElementById('sensors').value;
+                    if(sensorName === 'All'){
+                        jsSensor.stopAll();
+                    }else{
+                        jsSensor.stop(sensorName);
+                    }
+                });
+
+                let sensorNames = jsSensor.getMappedSensorNames();
+                let options = [];
+                let el, i;
+                el = document.createElement('option');
+                el.value = 'All';
+                el.innerHTML = 'All'
+                //el.selected = true;
+                options.push(el);
+                let defaultValue = 'All';
+                for(i=0; i<sensorNames.length; i++){
+                    el = document.createElement('option');
+                    el.value = sensorNames[i];
+                    el.innerHTML = sensorNames[i];
+                    if(el.value === defaultValue){
+                        el.selected = true;
+                    }
+
+                    options.push(el);
+                }
+                
+                for(i=0; i<options.length; i++){
+                    document.getElementById('sensors').appendChild(options[i]);
+                }
+            }
+        </script>
+    </head>
+
+    <body>
+        <div class="content">
+            <h1>js-sensor Example</h1>
+            
+            <div>
+                <h2>Inputs</h2>
+                <ul>
+                    <select id='sensors' class="large-selector">
+                        <!-- SENSORS ADDED HERE -->
+                    </select>
+                    <li><input id='watch' class="large-button" type='button' value='Watch'></li>
+                    <li><input id='stop' class="large-button" type='button' value='Stop'></li>
+                </ul>
+            </div>
+
+            <div>
+                <h2>Logs</h2>
+                <div id='logs' class="border-div">
+                    <!-- LOGS OUTPUTTED HERE -->
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

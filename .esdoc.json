@@ -1,0 +1,16 @@
+{
+    "source": "./class",
+    "destination": "./docs",
+    "plugins": [
+        {
+            "name": "esdoc-standard-plugin",
+            "option": {
+                "test": {
+                 "source": "./test/"
+                },
+                "coverage": {"enable": true},
+                "unexportedIdentifier": {"enable": true}
+            }
+        }
+    ]
+}
