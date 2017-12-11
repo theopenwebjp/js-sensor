@@ -13,79 +13,126 @@ class RawSensorWatcher {
          * check: optional.
          */
         this.sensorHandles = {
-               watchPosition: {
-                   start: (options)=>{
-                       let eventListener = options.events.data;
-                       return new Promise((resolve, reject)=>{
-                           let id = navigator.geolocation.watchPosition(
-                               eventListener,
-                               (err)=>{
-                                   return reject(console.error('Failed watchPosition', err));
-                                }
-                            );
-                            resolve([id]);
-                        });
-                    },
-                    stop: (id)=>{navigator.geolocation.clearWatch(id); return Promise.resolve();}
-               },
-               getUserMedia: {
-                   start: (options)=>{
-                       let eventListener = options.events.data;
-                       return navigator.mediaDevices.getUserMedia({audio: true, video: true})
-                       .then((stream)=>{
-                           /*
-                           //MediaRecorder API. Preferred but ondataavailablelet seems unreliable.
-                           let recorder = new MediaRecorder(stream);
-                           let onDataAvailable = function(ev){console.log("WORKED");
+            
+            /**
+             * Watch GPS position
+             * data: https://developer.mozilla.org/en-US/docs/Web/API/Position
+             * 
+             * @see https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/watchPosition
+             * @return {SensorListener}
+             */
+            watchPosition: {
+                start: (options)=>{
+                    let eventListener = options.events.data;
+                    return new Promise((resolve, reject)=>{
+                        let id = navigator.geolocation.watchPosition(
+                            eventListener,
+                            (err)=>{
+                                return reject(console.error('Failed watchPosition', err));
+                            }
+                        );
+                        resolve([id]);
+                    });
+                },
+                stop: (id)=>{navigator.geolocation.clearWatch(id); return Promise.resolve();}
+            },
+
+            /**
+             * Gets camera and audio and records
+             * data: image dataURL
+             * 
+             * @see https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia
+             * @return {SensorListener}
+             */
+            getUserMedia: {
+                start: (options)=>{
+                    let eventListener = options.events.data;
+                    return navigator.mediaDevices.getUserMedia({audio: true, video: true})
+                    .then((stream)=>{
+                        /*
+                        //MediaRecorder API. Preferred but ondataavailable seems unreliable.
+                        let recorder = new MediaRecorder(stream);
+                        let onDataAvailable = function(ev){console.log("WORKED");
+                        eventListener(ev.data);
+                        };
+                        //recorder.addEventListener('dataavailable', onDataAvailable);
+                        recorder.ondataavailable = onDataAvailable;
+                        recorder.start();
+                        */
+
+                        //Basic interval
+                        let url = window.URL.createObjectURL(stream);
+                        let video = document.createElement('video');
+                        video.autoplay = true;
+                        video.src = url;
+
+                        let recorder = {};
+                        recorder.interval = null;
+                        recorder.ondataavailable = function(ev){
                             eventListener(ev.data);
-                           };
-                           //recorder.addEventListener('dataavailable', onDataAvailable);
-                           recorder.ondataavailable = onDataAvailable;
-                           recorder.start();
-                           */
+                        };
+                        recorder.start = function(){
+                            recorder.interval = window.setInterval(recorder.handleData, 500);
+                        };
+                        recorder.handleData = function(){
+                            let canvas = document.createElement('canvas');
+                            canvas.width = video.videoWidth;
+                            canvas.height = video.videoHeight;
+                            let ctx = canvas.getContext('2d');
+                            ctx.drawImage(video, 0, 0);
 
-                           //Basic interval
-                           let url = window.URL.createObjectURL(stream);
-                           let video = document.createElement('video');
-                           video.autoplay = true;
-                           video.src = url;
+                            recorder.ondataavailable({
+                                data: canvas.toDataURL()
+                            });
+                        };
+                        recorder.stop = function(){
+                            window.URL.revokeObjectURL(url);
+                            window.clearTimeout(recorder.interval);
+                            recorder.interval = null;
+                        };
+                        recorder.start();
 
-                           let recorder = {};
-                           recorder.interval = null;
-                           recorder.ondataavailable = function(ev){
-                               eventListener(ev.data);
-                           };
-                           recorder.start = function(){
-                               recorder.interval = window.setInterval(recorder.handleData, 500);
-                           };
-                           recorder.handleData = function(){
-                               let canvas = document.createElement('canvas');
-                               canvas.width = video.videoWidth;
-                               canvas.height = video.videoHeight;
-                               let ctx = canvas.getContext('2d');
-                               ctx.drawImage(video, 0, 0);
+                        return Promise.resolve([stream, recorder]);
+                    });
+                },
+                stop: (stream, recorder)=>{recorder.stop(); let tracks = stream.getTracks(); tracks.map((track)=>{track.stop();}); return Promise.resolve();}
+            },
 
-                               recorder.ondataavailable({
-                                   data: canvas.toDataURL()
-                               });
-                           };
-                           recorder.stop = function(){
-                               window.URL.revokeObjectURL(url);
-                               window.clearTimeout(recorder.interval);
-                               recorder.interval = null;
-                           };
-                           recorder.start();
-
-                           return Promise.resolve([stream, recorder]);
-                       });
-                    },
-                   stop: (stream, recorder)=>{recorder.stop(); let tracks = stream.getTracks(); tracks.map((track)=>{track.stop();}); return Promise.resolve();}
-               },
-               deviceOrientation: this._getWindowEventListenerObject('deviceorientation'),
-               deviceLight: this._getWindowEventListenerObject('devicelight'),
-               deviceProximity: this._getWindowEventListenerObject('deviceproximity'),
-               deviceMotion: this._getWindowEventListenerObject('devicemotion'),
-               test: this._getTestEventListenerObject()//Useful for both automated testing and learning on personal computer.
+            /**
+             * Device orientation(3d coordinates)
+             * @see https://developer.mozilla.org/en-US/docs/Web/Events/deviceorientation
+             * @return {SensorListener}
+             */
+            deviceOrientation: this._getWindowEventListenerObject('deviceorientation'),
+            
+            /**
+             * Device light(lux)
+             * @see https://developer.mozilla.org/en-US/docs/Web/API/DeviceLightEvent
+             * @return {SensorListener}
+             */
+            deviceLight: this._getWindowEventListenerObject('devicelight'),
+            
+            /**
+             * Device proximity(cm)
+             * @see https://developer.mozilla.org/en-US/docs/Web/Events/deviceproximity
+             * @return {SensorListener}
+             */
+            deviceProximity: this._getWindowEventListenerObject('deviceproximity'),
+            
+            /**
+             * Device motion(acceleration + rotation. Can use for measuring path taken.)
+             * @see https://developer.mozilla.org/en-US/docs/Web/Events/devicemotion
+             * @return {SensorListener}
+             */
+            deviceMotion: this._getWindowEventListenerObject('devicemotion'),
+            
+            /**
+             * Test use only.
+             * For testing when sensors might not be available.
+             * Not implemented in watchAll.
+             * @return {SensorListener}
+             */
+            test: this._getTestEventListenerObject()//Useful for both automated testing and learning on personal computer.
         };
     }
 
@@ -104,7 +151,7 @@ class RawSensorWatcher {
     }
 
     /**
-     * 
+     * Common SensorListener for window events such as devicemotion.
      * 
      * @param {String} eventName 
      * @return {SensorListener}

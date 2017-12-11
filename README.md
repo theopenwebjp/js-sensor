@@ -8,10 +8,34 @@
  2. "npm install" in base directory
 
  ## Usage
+ The full api can be checked from the documentation. See "Documentation" below.
+
+ Basic usage can be seen below:
  
  ```
  const jsSensor = new require('js-sensor');
- 
+
+ //Get sensor list
+ console.log('names:' jsSensor.getMappedSensorNames());
+
+ //Update/extend
+ jsSensor.updateSensorListeners((sensorListenerMap)=>{
+     sensorListenerMap['myListener'] = {
+         start: (options)=>{
+             const data = '...HANDLE HERE';
+             options.events.data(data);
+         },
+         stop: ()=>{
+             //STOP
+         },
+         check: ()=>{
+             //CHECK FOR AVAILABILITY
+             return true;
+         }
+     };
+     return sensorListenerMap;
+ });
+
  //Get
  jsSensor.get('deviceMotion')
  .then((data)=>{
@@ -27,6 +51,15 @@
          }
      }
  });
+
+ //Stop
+ jsSensor.stop('deviceOrientation);
+
+ //WatchAll
+ jsSensor.watchAll();
+ //...wait a while
+ //StopAll
+ jsSensor.stopAll()
  ```
 
  ## Events
@@ -46,4 +79,4 @@
  * Eslint
 
  ## Documentation
- * Esdoc
+ * Esdoc(./docs/)

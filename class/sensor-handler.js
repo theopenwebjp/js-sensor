@@ -9,6 +9,7 @@ class SensorHandler {
 
     constructor(){
 
+        //Override with updateSensorListeners
         this.rawSensorWatcher = rawSensorWatcher;
         
         //SensorState mapped by sensor name
@@ -217,6 +218,18 @@ class SensorHandler {
         }else{
             return false;
         }
+    }
+
+    /**
+     * Update registered sensor listeners.
+     * Pass handle with one argument.
+     * MUST return.
+     * Dynamic updating during watching may result in bugs.
+     * 
+     * @param {Function} handle handle taking object map of registered SensorListeners 
+     */
+    updateSensorListeners(callback){
+        this.rawSensorWatcher = callback(this.rawSensorWatcher);
     }
 
     /**
