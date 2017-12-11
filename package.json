@@ -2,7 +2,7 @@
   "name": "js-sensor",
   "main": "./class/js-sensor.js",
   "version": "1.0.0",
-  "description": "JavaScript abstract sensor library.",
+  "description": "JavaScript sensor library for native input sensors.",
   "directories": {
     "example": "example",
     "test": "test"
