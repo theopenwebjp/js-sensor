@@ -1,21 +1,21 @@
 window.esdocSearchIndex = [
   [
+    "js-sensor/class/browser-sensor-watcher.js~browsersensorwatcher",
+    "class/class/browser-sensor-watcher.js~BrowserSensorWatcher.html",
+    "<span>BrowserSensorWatcher</span> <span class=\"search-result-import-path\">js-sensor/class/browser-sensor-watcher.js</span>",
+    "class"
+  ],
+  [
+    "js-sensor/class/sensor-handler.js~browsersensorwatcher",
+    "variable/index.html#static-variable-BrowserSensorWatcher",
+    "<span>BrowserSensorWatcher</span> <span class=\"search-result-import-path\">js-sensor/class/sensor-handler.js</span>",
+    "variable"
+  ],
+  [
     "js-sensor~jssensor",
     "class/class/js-sensor.js~JsSensor.html",
     "<span>JsSensor</span> <span class=\"search-result-import-path\">js-sensor</span>",
     "class"
-  ],
-  [
-    "js-sensor/class/raw-sensor-watcher.js~rawsensorwatcher",
-    "class/class/raw-sensor-watcher.js~RawSensorWatcher.html",
-    "<span>RawSensorWatcher</span> <span class=\"search-result-import-path\">js-sensor/class/raw-sensor-watcher.js</span>",
-    "class"
-  ],
-  [
-    "js-sensor/class/sensor-handler.js~rawsensorwatcher",
-    "variable/index.html#static-variable-RawSensorWatcher",
-    "<span>RawSensorWatcher</span> <span class=\"search-result-import-path\">js-sensor/class/sensor-handler.js</span>",
-    "variable"
   ],
   [
     "js-sensor/class/sensor-handler.js~sensorhandler",
@@ -30,10 +30,16 @@ window.esdocSearchIndex = [
     "variable"
   ],
   [
-    "js-sensor/class/sensor-handler.js~rawsensorwatcher",
-    "variable/index.html#static-variable-rawSensorWatcher",
-    "<span>rawSensorWatcher</span> <span class=\"search-result-import-path\">js-sensor/class/sensor-handler.js</span>",
-    "variable"
+    "",
+    "test-file/test/browser-sensor-watcher.test.js.html#lineNumber5",
+    "BrowserSensorWatcher",
+    "test"
+  ],
+  [
+    "",
+    "test-file/test/browser-sensor-watcher.test.js.html#lineNumber6",
+    "BrowserSensorWatcher _getWindowEventListenerObject",
+    "test"
   ],
   [
     "",
@@ -45,18 +51,6 @@ window.esdocSearchIndex = [
     "",
     "test-file/test/js-sensor.test.js.html#lineNumber6",
     "JsSensor construction",
-    "test"
-  ],
-  [
-    "",
-    "test-file/test/raw-sensor-watcher.test.js.html#lineNumber5",
-    "RawSensorWatcher",
-    "test"
-  ],
-  [
-    "",
-    "test-file/test/raw-sensor-watcher.test.js.html#lineNumber6",
-    "RawSensorWatcher _getWindowEventListenerObject",
     "test"
   ],
   [
@@ -402,6 +396,42 @@ window.esdocSearchIndex = [
     "external"
   ],
   [
+    "class/browser-sensor-watcher.js",
+    "file/class/browser-sensor-watcher.js.html",
+    "class/browser-sensor-watcher.js",
+    "file"
+  ],
+  [
+    "class/browser-sensor-watcher.js~browsersensorwatcher#sensorlistener",
+    "class/class/browser-sensor-watcher.js~BrowserSensorWatcher.html#instance-method-SensorListener",
+    "class/browser-sensor-watcher.js~BrowserSensorWatcher#SensorListener",
+    "method"
+  ],
+  [
+    "class/browser-sensor-watcher.js~browsersensorwatcher#_gettesteventlistenerobject",
+    "class/class/browser-sensor-watcher.js~BrowserSensorWatcher.html#instance-method-_getTestEventListenerObject",
+    "class/browser-sensor-watcher.js~BrowserSensorWatcher#_getTestEventListenerObject",
+    "method"
+  ],
+  [
+    "class/browser-sensor-watcher.js~browsersensorwatcher#_getwindoweventlistenerobject",
+    "class/class/browser-sensor-watcher.js~BrowserSensorWatcher.html#instance-method-_getWindowEventListenerObject",
+    "class/browser-sensor-watcher.js~BrowserSensorWatcher#_getWindowEventListenerObject",
+    "method"
+  ],
+  [
+    "class/browser-sensor-watcher.js~browsersensorwatcher#constructor",
+    "class/class/browser-sensor-watcher.js~BrowserSensorWatcher.html#instance-constructor-constructor",
+    "class/browser-sensor-watcher.js~BrowserSensorWatcher#constructor",
+    "method"
+  ],
+  [
+    "class/browser-sensor-watcher.js~browsersensorwatcher#sensorhandles",
+    "class/class/browser-sensor-watcher.js~BrowserSensorWatcher.html#instance-member-sensorHandles",
+    "class/browser-sensor-watcher.js~BrowserSensorWatcher#sensorHandles",
+    "member"
+  ],
+  [
     "class/js-sensor.js",
     "file/class/js-sensor.js.html",
     "class/js-sensor.js",
@@ -412,42 +442,6 @@ window.esdocSearchIndex = [
     "class/class/js-sensor.js~JsSensor.html#instance-constructor-constructor",
     "class/js-sensor.js~JsSensor#constructor",
     "method"
-  ],
-  [
-    "class/raw-sensor-watcher.js",
-    "file/class/raw-sensor-watcher.js.html",
-    "class/raw-sensor-watcher.js",
-    "file"
-  ],
-  [
-    "class/raw-sensor-watcher.js~rawsensorwatcher#sensorlistener",
-    "class/class/raw-sensor-watcher.js~RawSensorWatcher.html#instance-method-SensorListener",
-    "class/raw-sensor-watcher.js~RawSensorWatcher#SensorListener",
-    "method"
-  ],
-  [
-    "class/raw-sensor-watcher.js~rawsensorwatcher#_gettesteventlistenerobject",
-    "class/class/raw-sensor-watcher.js~RawSensorWatcher.html#instance-method-_getTestEventListenerObject",
-    "class/raw-sensor-watcher.js~RawSensorWatcher#_getTestEventListenerObject",
-    "method"
-  ],
-  [
-    "class/raw-sensor-watcher.js~rawsensorwatcher#_getwindoweventlistenerobject",
-    "class/class/raw-sensor-watcher.js~RawSensorWatcher.html#instance-method-_getWindowEventListenerObject",
-    "class/raw-sensor-watcher.js~RawSensorWatcher#_getWindowEventListenerObject",
-    "method"
-  ],
-  [
-    "class/raw-sensor-watcher.js~rawsensorwatcher#constructor",
-    "class/class/raw-sensor-watcher.js~RawSensorWatcher.html#instance-constructor-constructor",
-    "class/raw-sensor-watcher.js~RawSensorWatcher#constructor",
-    "method"
-  ],
-  [
-    "class/raw-sensor-watcher.js~rawsensorwatcher#sensorhandles",
-    "class/class/raw-sensor-watcher.js~RawSensorWatcher.html#instance-member-sensorHandles",
-    "class/raw-sensor-watcher.js~RawSensorWatcher#sensorHandles",
-    "member"
   ],
   [
     "class/sensor-handler.js",
@@ -546,6 +540,12 @@ window.esdocSearchIndex = [
     "method"
   ],
   [
+    "class/sensor-handler.js~sensorhandler#updatesensorlisteners",
+    "class/class/sensor-handler.js~SensorHandler.html#instance-method-updateSensorListeners",
+    "class/sensor-handler.js~SensorHandler#updateSensorListeners",
+    "method"
+  ],
+  [
     "class/sensor-handler.js~sensorhandler#watch",
     "class/class/sensor-handler.js~SensorHandler.html#instance-method-watch",
     "class/sensor-handler.js~SensorHandler#watch",
@@ -558,15 +558,15 @@ window.esdocSearchIndex = [
     "method"
   ],
   [
-    "test/js-sensor.test.js",
-    "test-file/test/js-sensor.test.js.html",
-    "test/js-sensor.test.js",
+    "test/browser-sensor-watcher.test.js",
+    "test-file/test/browser-sensor-watcher.test.js.html",
+    "test/browser-sensor-watcher.test.js",
     "testFile"
   ],
   [
-    "test/raw-sensor-watcher.test.js",
-    "test-file/test/raw-sensor-watcher.test.js.html",
-    "test/raw-sensor-watcher.test.js",
+    "test/js-sensor.test.js",
+    "test-file/test/js-sensor.test.js.html",
+    "test/js-sensor.test.js",
     "testFile"
   ],
   [

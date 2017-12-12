@@ -1,5 +1,5 @@
-const RawSensorWatcher = require('./raw-sensor-watcher');
-const rawSensorWatcher = new RawSensorWatcher();
+const BrowserSensorWatcher = require('./browser-sensor-watcher');
+let rawSensorWatcher;
 
 /**
  * Main class for handling sensors.
@@ -7,11 +7,13 @@ const rawSensorWatcher = new RawSensorWatcher();
  */
 class SensorHandler {
 
-    constructor(){
+    constructor(env='browser'){
 
         //Override with updateSensorListeners
-        this.rawSensorWatcher = rawSensorWatcher;
-        
+        if(env === 'browser'){
+            rawSensorWatcher = this.rawSensorWatcher = new BrowserSensorWatcher();
+        }
+
         //SensorState mapped by sensor name
         this.sensors = {
             //

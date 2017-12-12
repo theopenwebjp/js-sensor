@@ -566,116 +566,53 @@
   {
     "__docId__": 48,
     "kind": "file",
-    "name": "class/js-sensor.js",
-    "content": "const SensorHandler = require('./sensor-handler');\r\n\r\n/**\r\n * Wrapper for main class\r\n * Add additional methods here not to do with sensors if required.\r\n */\r\nclass JsSensor extends SensorHandler{\r\n    constructor(){\r\n        super();\r\n    }\r\n}\r\n\r\nif(typeof window !== 'undefined'){\r\n    window.JsSensor = JsSensor;\r\n}\r\nif(typeof module !== 'undefined'){\r\n    module.exports = JsSensor;\r\n}",
+    "name": "class/browser-sensor-watcher.js",
+    "content": "/**\r\n * Collection of browser based sensor events.\r\n * Sensors should be continuous events.\r\n * Therefor each should be setup in similar way using an event listener.\r\n * Objects of events, arguments and implementations may differ.\r\n */\r\nclass BrowserSensorWatcher {\r\n\r\n    constructor(){\r\n        /**\r\n         * All sensor handles must return promise and take no arguments.\r\n         * start: required. args: (optional options object) should resolve an array with arguments to be passed to stop.\r\n         * stop: required. args: (returnedData from start)\r\n         * check: optional.\r\n         */\r\n        this.sensorHandles = {\r\n            \r\n            /**\r\n             * Watch GPS position\r\n             * data: https://developer.mozilla.org/en-US/docs/Web/API/Position\r\n             * \r\n             * @see https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/watchPosition\r\n             * @return {SensorListener}\r\n             */\r\n            watchPosition: {\r\n                start: (options)=>{\r\n                    let eventListener = options.events.data;\r\n                    return new Promise((resolve, reject)=>{\r\n                        let id = navigator.geolocation.watchPosition(\r\n                            eventListener,\r\n                            (err)=>{\r\n                                return reject(console.error('Failed watchPosition', err));\r\n                            }\r\n                        );\r\n                        resolve([id]);\r\n                    });\r\n                },\r\n                stop: (id)=>{navigator.geolocation.clearWatch(id); return Promise.resolve();}\r\n            },\r\n\r\n            /**\r\n             * Gets camera and audio and records\r\n             * data: image dataURL\r\n             * \r\n             * @see https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia\r\n             * @return {SensorListener}\r\n             */\r\n            getUserMedia: {\r\n                start: (options)=>{\r\n                    let eventListener = options.events.data;\r\n                    return navigator.mediaDevices.getUserMedia({audio: true, video: true})\r\n                    .then((stream)=>{\r\n                        /*\r\n                        //MediaRecorder API. Preferred but ondataavailable seems unreliable.\r\n                        let recorder = new MediaRecorder(stream);\r\n                        let onDataAvailable = function(ev){console.log(\"WORKED\");\r\n                        eventListener(ev.data);\r\n                        };\r\n                        //recorder.addEventListener('dataavailable', onDataAvailable);\r\n                        recorder.ondataavailable = onDataAvailable;\r\n                        recorder.start();\r\n                        */\r\n\r\n                        //Basic interval\r\n                        let url = window.URL.createObjectURL(stream);\r\n                        let video = document.createElement('video');\r\n                        video.autoplay = true;\r\n                        video.src = url;\r\n\r\n                        let recorder = {};\r\n                        recorder.interval = null;\r\n                        recorder.ondataavailable = function(ev){\r\n                            eventListener(ev.data);\r\n                        };\r\n                        recorder.start = function(){\r\n                            recorder.interval = window.setInterval(recorder.handleData, 500);\r\n                        };\r\n                        recorder.handleData = function(){\r\n                            let canvas = document.createElement('canvas');\r\n                            canvas.width = video.videoWidth;\r\n                            canvas.height = video.videoHeight;\r\n                            let ctx = canvas.getContext('2d');\r\n                            ctx.drawImage(video, 0, 0);\r\n\r\n                            recorder.ondataavailable({\r\n                                data: canvas.toDataURL()\r\n                            });\r\n                        };\r\n                        recorder.stop = function(){\r\n                            window.URL.revokeObjectURL(url);\r\n                            window.clearTimeout(recorder.interval);\r\n                            recorder.interval = null;\r\n                        };\r\n                        recorder.start();\r\n\r\n                        return Promise.resolve([stream, recorder]);\r\n                    });\r\n                },\r\n                stop: (stream, recorder)=>{recorder.stop(); let tracks = stream.getTracks(); tracks.map((track)=>{track.stop();}); return Promise.resolve();}\r\n            },\r\n\r\n            /**\r\n             * Device orientation(3d coordinates)\r\n             * @see https://developer.mozilla.org/en-US/docs/Web/Events/deviceorientation\r\n             * @return {SensorListener}\r\n             */\r\n            deviceOrientation: this._getWindowEventListenerObject('deviceorientation'),\r\n            \r\n            /**\r\n             * Device light(lux)\r\n             * @see https://developer.mozilla.org/en-US/docs/Web/API/DeviceLightEvent\r\n             * @return {SensorListener}\r\n             */\r\n            deviceLight: this._getWindowEventListenerObject('devicelight'),\r\n            \r\n            /**\r\n             * Device proximity(cm)\r\n             * @see https://developer.mozilla.org/en-US/docs/Web/Events/deviceproximity\r\n             * @return {SensorListener}\r\n             */\r\n            deviceProximity: this._getWindowEventListenerObject('deviceproximity'),\r\n            \r\n            /**\r\n             * Device motion(acceleration + rotation. Can use for measuring path taken.)\r\n             * @see https://developer.mozilla.org/en-US/docs/Web/Events/devicemotion\r\n             * @return {SensorListener}\r\n             */\r\n            deviceMotion: this._getWindowEventListenerObject('devicemotion'),\r\n            \r\n            /**\r\n             * Test use only.\r\n             * For testing when sensors might not be available.\r\n             * Not implemented in watchAll.\r\n             * @return {SensorListener}\r\n             */\r\n            test: this._getTestEventListenerObject()//Useful for both automated testing and learning on personal computer.\r\n        };\r\n    }\r\n\r\n    /**\r\n     * Common object for handling sensors\r\n     * start: Starts watching sensor\r\n     * stop: Stops watching sensor\r\n     * check: Checks for support\r\n     */\r\n    SensorListener(){\r\n        return {\r\n            start: ()=>{},\r\n            stop: ()=>{},\r\n            check: ()=>{return true;}\r\n        };\r\n    }\r\n\r\n    /**\r\n     * Common SensorListener for window events such as devicemotion.\r\n     * \r\n     * @param {String} eventName \r\n     * @return {SensorListener}\r\n     */\r\n    _getWindowEventListenerObject(eventName){\r\n        return {\r\n            start: function(options){\r\n                let eventListener = options.events.data;\r\n                return new Promise((resolve, reject)=>{\r\n                    window.addEventListener(eventName, eventListener);\r\n                    resolve([eventName, eventListener]);\r\n                }); \r\n            },\r\n            stop: function(eventName, eventListener){\r\n                return new Promise((resolve, reject)=>{\r\n                    window.removeEventListener(eventName, eventListener);\r\n                    resolve();\r\n                });\r\n            },\r\n            check: ()=>{return true;}\r\n        };\r\n    }\r\n\r\n    /**\r\n     * Gets test SensorListener that can be used without access to sensors.\r\n     * Used for testing on displaying when sensors not available.\r\n     * \r\n     * @return {SensorListener}\r\n     */\r\n    _getTestEventListenerObject(){\r\n        return {\r\n            start: function(options){\r\n                let eventListener = options.events.data;\r\n                return new Promise((resolve, reject)=>{\r\n                    let id = window.setInterval(()=>{\r\n                        eventListener('test data');\r\n                    }, 500);\r\n\r\n                    resolve([id]);\r\n                });\r\n            },\r\n            stop: function(id){\r\n                return new Promise((resolve, reject)=>{\r\n                    window.clearTimeout(id);\r\n                    resolve();\r\n                });\r\n            },\r\n            check: function(){\r\n                return true;\r\n            }\r\n        }\r\n    }\r\n}\r\n\r\nmodule.exports = BrowserSensorWatcher;",
     "static": true,
-    "longname": "C:/d/projects/public/js-sensor/class/js-sensor.js",
+    "longname": "C:/d/projects/public/js-sensor/class/browser-sensor-watcher.js",
     "access": "public",
     "description": null,
     "lineNumber": 1
   },
   {
     "__docId__": 49,
-    "kind": "variable",
-    "name": "SensorHandler",
-    "memberof": "class/js-sensor.js",
-    "static": true,
-    "longname": "class/js-sensor.js~SensorHandler",
-    "access": "public",
-    "export": false,
-    "importPath": "js-sensor",
-    "importStyle": null,
-    "description": null,
-    "lineNumber": 1,
-    "undocument": true,
-    "type": {
-      "types": [
-        "*"
-      ]
-    }
-  },
-  {
-    "__docId__": 50,
     "kind": "class",
-    "name": "JsSensor",
-    "memberof": "class/js-sensor.js",
+    "name": "BrowserSensorWatcher",
+    "memberof": "class/browser-sensor-watcher.js",
     "static": true,
-    "longname": "class/js-sensor.js~JsSensor",
+    "longname": "class/browser-sensor-watcher.js~BrowserSensorWatcher",
     "access": "public",
     "export": false,
-    "importPath": "js-sensor",
+    "importPath": "js-sensor/class/browser-sensor-watcher.js",
     "importStyle": null,
-    "description": "Wrapper for main class\nAdd additional methods here not to do with sensors if required.",
+    "description": "Collection of browser based sensor events.\nSensors should be continuous events.\nTherefor each should be setup in similar way using an event listener.\nObjects of events, arguments and implementations may differ.",
     "lineNumber": 7,
-    "interface": false,
-    "extends": [
-      "SensorHandler"
-    ]
-  },
-  {
-    "__docId__": 51,
-    "kind": "constructor",
-    "name": "constructor",
-    "memberof": "class/js-sensor.js~JsSensor",
-    "generator": false,
-    "async": false,
-    "static": false,
-    "longname": "class/js-sensor.js~JsSensor#constructor",
-    "access": "public",
-    "description": null,
-    "lineNumber": 8,
-    "undocument": true
-  },
-  {
-    "__docId__": 52,
-    "kind": "file",
-    "name": "class/raw-sensor-watcher.js",
-    "content": "/**\r\n * Sensors should be continuous events.\r\n * Therefor each should be setup in similar way using an event listener.\r\n * Objects of events, arguments and implementations may differ.\r\n */\r\nclass RawSensorWatcher {\r\n\r\n    constructor(){\r\n        /**\r\n         * All sensor handles must return promise and take no arguments.\r\n         * start: required. args: (optional options object) should resolve an array with arguments to be passed to stop.\r\n         * stop: required. args: (returnedData from start)\r\n         * check: optional.\r\n         */\r\n        this.sensorHandles = {\r\n               watchPosition: {\r\n                   start: (options)=>{\r\n                       let eventListener = options.events.data;\r\n                       return new Promise((resolve, reject)=>{\r\n                           let id = navigator.geolocation.watchPosition(\r\n                               eventListener,\r\n                               (err)=>{\r\n                                   return reject(console.error('Failed watchPosition', err));\r\n                                }\r\n                            );\r\n                            resolve([id]);\r\n                        });\r\n                    },\r\n                    stop: (id)=>{navigator.geolocation.clearWatch(id); return Promise.resolve();}\r\n               },\r\n               getUserMedia: {\r\n                   start: (options)=>{\r\n                       let eventListener = options.events.data;\r\n                       return navigator.mediaDevices.getUserMedia({audio: true, video: true})\r\n                       .then((stream)=>{\r\n                           /*\r\n                           //MediaRecorder API. Preferred but ondataavailablelet seems unreliable.\r\n                           let recorder = new MediaRecorder(stream);\r\n                           let onDataAvailable = function(ev){console.log(\"WORKED\");\r\n                            eventListener(ev.data);\r\n                           };\r\n                           //recorder.addEventListener('dataavailable', onDataAvailable);\r\n                           recorder.ondataavailable = onDataAvailable;\r\n                           recorder.start();\r\n                           */\r\n\r\n                           //Basic interval\r\n                           let url = window.URL.createObjectURL(stream);\r\n                           let video = document.createElement('video');\r\n                           video.autoplay = true;\r\n                           video.src = url;\r\n\r\n                           let recorder = {};\r\n                           recorder.interval = null;\r\n                           recorder.ondataavailable = function(ev){\r\n                               eventListener(ev.data);\r\n                           };\r\n                           recorder.start = function(){\r\n                               recorder.interval = window.setInterval(recorder.handleData, 500);\r\n                           };\r\n                           recorder.handleData = function(){\r\n                               let canvas = document.createElement('canvas');\r\n                               canvas.width = video.videoWidth;\r\n                               canvas.height = video.videoHeight;\r\n                               let ctx = canvas.getContext('2d');\r\n                               ctx.drawImage(video, 0, 0);\r\n\r\n                               recorder.ondataavailable({\r\n                                   data: canvas.toDataURL()\r\n                               });\r\n                           };\r\n                           recorder.stop = function(){\r\n                               window.URL.revokeObjectURL(url);\r\n                               window.clearTimeout(recorder.interval);\r\n                               recorder.interval = null;\r\n                           };\r\n                           recorder.start();\r\n\r\n                           return Promise.resolve([stream, recorder]);\r\n                       });\r\n                    },\r\n                   stop: (stream, recorder)=>{recorder.stop(); let tracks = stream.getTracks(); tracks.map((track)=>{track.stop();}); return Promise.resolve();}\r\n               },\r\n               deviceOrientation: this._getWindowEventListenerObject('deviceorientation'),\r\n               deviceLight: this._getWindowEventListenerObject('devicelight'),\r\n               deviceProximity: this._getWindowEventListenerObject('deviceproximity'),\r\n               deviceMotion: this._getWindowEventListenerObject('devicemotion'),\r\n               test: this._getTestEventListenerObject()//Useful for both automated testing and learning on personal computer.\r\n        };\r\n    }\r\n\r\n    /**\r\n     * Common object for handling sensors\r\n     * start: Starts watching sensor\r\n     * stop: Stops watching sensor\r\n     * check: Checks for support\r\n     */\r\n    SensorListener(){\r\n        return {\r\n            start: ()=>{},\r\n            stop: ()=>{},\r\n            check: ()=>{return true;}\r\n        };\r\n    }\r\n\r\n    /**\r\n     * \r\n     * \r\n     * @param {String} eventName \r\n     * @return {SensorListener}\r\n     */\r\n    _getWindowEventListenerObject(eventName){\r\n        return {\r\n            start: function(options){\r\n                let eventListener = options.events.data;\r\n                return new Promise((resolve, reject)=>{\r\n                    window.addEventListener(eventName, eventListener);\r\n                    resolve([eventName, eventListener]);\r\n                }); \r\n            },\r\n            stop: function(eventName, eventListener){\r\n                return new Promise((resolve, reject)=>{\r\n                    window.removeEventListener(eventName, eventListener);\r\n                    resolve();\r\n                });\r\n            },\r\n            check: ()=>{return true;}\r\n        };\r\n    }\r\n\r\n    /**\r\n     * Gets test SensorListener that can be used without access to sensors.\r\n     * Used for testing on displaying when sensors not available.\r\n     * \r\n     * @return {SensorListener}\r\n     */\r\n    _getTestEventListenerObject(){\r\n        return {\r\n            start: function(options){\r\n                let eventListener = options.events.data;\r\n                return new Promise((resolve, reject)=>{\r\n                    let id = window.setInterval(()=>{\r\n                        eventListener('test data');\r\n                    }, 500);\r\n\r\n                    resolve([id]);\r\n                });\r\n            },\r\n            stop: function(id){\r\n                return new Promise((resolve, reject)=>{\r\n                    window.clearTimeout(id);\r\n                    resolve();\r\n                });\r\n            },\r\n            check: function(){\r\n                return true;\r\n            }\r\n        }\r\n    }\r\n}\r\n\r\nmodule.exports = RawSensorWatcher;",
-    "static": true,
-    "longname": "C:/d/projects/public/js-sensor/class/raw-sensor-watcher.js",
-    "access": "public",
-    "description": null,
-    "lineNumber": 1
-  },
-  {
-    "__docId__": 53,
-    "kind": "class",
-    "name": "RawSensorWatcher",
-    "memberof": "class/raw-sensor-watcher.js",
-    "static": true,
-    "longname": "class/raw-sensor-watcher.js~RawSensorWatcher",
-    "access": "public",
-    "export": false,
-    "importPath": "js-sensor/class/raw-sensor-watcher.js",
-    "importStyle": null,
-    "description": "Sensors should be continuous events.\nTherefor each should be setup in similar way using an event listener.\nObjects of events, arguments and implementations may differ.",
-    "lineNumber": 6,
     "interface": false
   },
   {
-    "__docId__": 54,
+    "__docId__": 50,
     "kind": "constructor",
     "name": "constructor",
-    "memberof": "class/raw-sensor-watcher.js~RawSensorWatcher",
+    "memberof": "class/browser-sensor-watcher.js~BrowserSensorWatcher",
     "generator": false,
     "async": false,
     "static": false,
-    "longname": "class/raw-sensor-watcher.js~RawSensorWatcher#constructor",
+    "longname": "class/browser-sensor-watcher.js~BrowserSensorWatcher#constructor",
     "access": "public",
     "description": null,
-    "lineNumber": 8,
+    "lineNumber": 9,
     "undocument": true
   },
   {
-    "__docId__": 55,
+    "__docId__": 51,
     "kind": "member",
     "name": "sensorHandles",
-    "memberof": "class/raw-sensor-watcher.js~RawSensorWatcher",
+    "memberof": "class/browser-sensor-watcher.js~BrowserSensorWatcher",
     "static": false,
-    "longname": "class/raw-sensor-watcher.js~RawSensorWatcher#sensorHandles",
+    "longname": "class/browser-sensor-watcher.js~BrowserSensorWatcher#sensorHandles",
     "access": "public",
     "description": "All sensor handles must return promise and take no arguments.\nstart: required. args: (optional options object) should resolve an array with arguments to be passed to stop.\nstop: required. args: (returnedData from start)\ncheck: optional.",
-    "lineNumber": 15,
+    "lineNumber": 16,
     "type": {
       "types": [
         "{\"watchPosition\": *, \"getUserMedia\": *, \"deviceOrientation\": *, \"deviceLight\": *, \"deviceProximity\": *, \"deviceMotion\": *, \"test\": *}"
@@ -683,17 +620,17 @@
     }
   },
   {
-    "__docId__": 56,
+    "__docId__": 52,
     "kind": "method",
     "name": "SensorListener",
-    "memberof": "class/raw-sensor-watcher.js~RawSensorWatcher",
+    "memberof": "class/browser-sensor-watcher.js~BrowserSensorWatcher",
     "generator": false,
     "async": false,
     "static": false,
-    "longname": "class/raw-sensor-watcher.js~RawSensorWatcher#SensorListener",
+    "longname": "class/browser-sensor-watcher.js~BrowserSensorWatcher#SensorListener",
     "access": "public",
     "description": "Common object for handling sensors\nstart: Starts watching sensor\nstop: Stops watching sensor\ncheck: Checks for support",
-    "lineNumber": 98,
+    "lineNumber": 146,
     "params": [],
     "return": {
       "types": [
@@ -702,17 +639,17 @@
     }
   },
   {
-    "__docId__": 57,
+    "__docId__": 53,
     "kind": "method",
     "name": "_getWindowEventListenerObject",
-    "memberof": "class/raw-sensor-watcher.js~RawSensorWatcher",
+    "memberof": "class/browser-sensor-watcher.js~BrowserSensorWatcher",
     "generator": false,
     "async": false,
     "static": false,
-    "longname": "class/raw-sensor-watcher.js~RawSensorWatcher#_getWindowEventListenerObject",
+    "longname": "class/browser-sensor-watcher.js~BrowserSensorWatcher#_getWindowEventListenerObject",
     "access": "private",
-    "description": "",
-    "lineNumber": 112,
+    "description": "Common SensorListener for window events such as devicemotion.",
+    "lineNumber": 160,
     "params": [
       {
         "nullable": null,
@@ -735,17 +672,17 @@
     }
   },
   {
-    "__docId__": 58,
+    "__docId__": 54,
     "kind": "method",
     "name": "_getTestEventListenerObject",
-    "memberof": "class/raw-sensor-watcher.js~RawSensorWatcher",
+    "memberof": "class/browser-sensor-watcher.js~BrowserSensorWatcher",
     "generator": false,
     "async": false,
     "static": false,
-    "longname": "class/raw-sensor-watcher.js~RawSensorWatcher#_getTestEventListenerObject",
+    "longname": "class/browser-sensor-watcher.js~BrowserSensorWatcher#_getTestEventListenerObject",
     "access": "private",
     "description": "Gets test SensorListener that can be used without access to sensors.\nUsed for testing on displaying when sensors not available.",
-    "lineNumber": 137,
+    "lineNumber": 185,
     "return": {
       "nullable": null,
       "types": [
@@ -757,10 +694,73 @@
     "params": []
   },
   {
+    "__docId__": 55,
+    "kind": "file",
+    "name": "class/js-sensor.js",
+    "content": "const SensorHandler = require('./sensor-handler');\r\n\r\n/**\r\n * Wrapper for main class\r\n * Add additional methods here not to do with sensors if required.\r\n */\r\nclass JsSensor extends SensorHandler{\r\n    constructor(){\r\n        super();\r\n    }\r\n}\r\n\r\nif(typeof window !== 'undefined'){\r\n    window.JsSensor = JsSensor;\r\n}\r\nif(typeof module !== 'undefined'){\r\n    module.exports = JsSensor;\r\n}",
+    "static": true,
+    "longname": "C:/d/projects/public/js-sensor/class/js-sensor.js",
+    "access": "public",
+    "description": null,
+    "lineNumber": 1
+  },
+  {
+    "__docId__": 56,
+    "kind": "variable",
+    "name": "SensorHandler",
+    "memberof": "class/js-sensor.js",
+    "static": true,
+    "longname": "class/js-sensor.js~SensorHandler",
+    "access": "public",
+    "export": false,
+    "importPath": "js-sensor",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 1,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 57,
+    "kind": "class",
+    "name": "JsSensor",
+    "memberof": "class/js-sensor.js",
+    "static": true,
+    "longname": "class/js-sensor.js~JsSensor",
+    "access": "public",
+    "export": false,
+    "importPath": "js-sensor",
+    "importStyle": null,
+    "description": "Wrapper for main class\nAdd additional methods here not to do with sensors if required.",
+    "lineNumber": 7,
+    "interface": false,
+    "extends": [
+      "SensorHandler"
+    ]
+  },
+  {
+    "__docId__": 58,
+    "kind": "constructor",
+    "name": "constructor",
+    "memberof": "class/js-sensor.js~JsSensor",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "class/js-sensor.js~JsSensor#constructor",
+    "access": "public",
+    "description": null,
+    "lineNumber": 8,
+    "undocument": true
+  },
+  {
     "__docId__": 59,
     "kind": "file",
     "name": "class/sensor-handler.js",
-    "content": "const RawSensorWatcher = require('./raw-sensor-watcher');\r\nconst rawSensorWatcher = new RawSensorWatcher();\r\n\r\n/**\r\n * Main class for handling sensors.\r\n * This class allows get, watch, etc. of sensors.\r\n */\r\nclass SensorHandler {\r\n\r\n    constructor(){\r\n\r\n        this.rawSensorWatcher = rawSensorWatcher;\r\n        \r\n        //SensorState mapped by sensor name\r\n        this.sensors = {\r\n            //\r\n        };\r\n\r\n        //Sensor counts stored accross start and stop watching to make sure async starting and stopping doesn't cause bugs.\r\n        this.sensorCreationCounts = {\r\n           // \r\n        };\r\n    }\r\n\r\n    /**\r\n     * Get sensor once. Should stop watching sensor if newly made.\r\n     * \r\n     * @param {string} sensorName \r\n     */\r\n    get(sensorName){\r\n        let self = this;\r\n        return new Promise((resolve, reject)=>{\r\n            let sensorCreationCount = self._getSensorCreationCount() + 1;\r\n            let handle = (sensorState)=>{\r\n                //resolve(sensorState);\r\n\r\n                //Only stop if no new watches happened.\r\n                if(!(self._getSensorCreationCount() > sensorCreationCount)){\r\n                    self.stop(sensorName)\r\n                    .then(()=>{\r\n                        resolve(sensorState);\r\n                    });\r\n                }else{\r\n                    resolve(sensorState);\r\n                }\r\n            };\r\n            self.watch(sensorName, {\r\n                events: {\r\n                    data: handle\r\n                }\r\n            });\r\n        });\r\n    }\r\n\r\n    /**\r\n     * Watch sensor from RawSensorWatcher. Ignores duplicates.\r\n     * options: {\r\n     *   events: {\r\n     *     data: function(data){}\r\n     *   }\r\n     * }\r\n     * \r\n     * @param {string} sensorName\r\n     * @param {object} options optional options\r\n     * @return {promise} promise resolving SensorState\r\n     */\r\n    watch(sensorName, options={}){\r\n        const self = this;\r\n        \r\n        //data required(use console log if nothing)\r\n        if(!options.events){options.events = {};}\r\n        if(!options.events.data){options.events.data = this._getDefaultDataEvent(sensorName);}\r\n\r\n        return new Promise((resolve, reject)=>{\r\n\r\n            const onResolve = (sensorState)=>{\r\n                self._incSensorCreationCount(sensorName);\r\n                resolve(sensorState);\r\n            };\r\n\r\n            if(self.sensors[sensorName]){\r\n                return onResolve(self.sensors[sensorName]);\r\n            }\r\n\r\n            if(rawSensorWatcher.sensorHandles[sensorName]){\r\n                rawSensorWatcher.sensorHandles[sensorName].start(options)\r\n                .then(function(startReturnData){\r\n                    let sensorState = self._setSensorState(sensorName, {\r\n                        options: options,\r\n                        startReturnData: startReturnData,\r\n                        stop: rawSensorWatcher.sensorHandles[sensorName].stop//Set to state because may implement multiple watching later.\r\n                    });\r\n                    return onResolve(sensorState);\r\n                })\r\n                .catch(reject);\r\n            }else{\r\n                return reject(new Error('No raw sensor: ' + sensorName));\r\n            }\r\n        });\r\n    }\r\n\r\n    /**\r\n     * Watches all available sensors.\r\n     * \r\n     * @return {promise} Resolves array of SensorStates. However allows for failing returning null.\r\n     */\r\n    watchAll(){\r\n        let possibleSensors = rawSensorWatcher.sensorHandles;\r\n        let promises = [];\r\n        for(let key in possibleSensors){\r\n            if(key === 'test'){continue;}\r\n            let p = new Promise((resolve, reject)=>{\r\n                this.watch(key)\r\n                .then(resolve)\r\n                .catch(()=>{\r\n                    resolve(null);\r\n                });\r\n            });\r\n            promises.push(p);\r\n        }\r\n\r\n        return Promise.all(promises);\r\n    }\r\n\r\n    /**\r\n     * Stops watching sensor.\r\n     * \r\n     * @param {string} sensorName\r\n     * @return {promise}\r\n     */\r\n    stop(sensorName){\r\n        let self = this;\r\n        return new Promise((resolve, reject)=>{\r\n            let sensor = self.sensors[sensorName];\r\n            if(!sensor){\r\n                reject(new Error('No sensor: ' + sensorName));\r\n            }\r\n\r\n            if(sensor.stop){\r\n                sensor.stop(...sensor.startReturnData)\r\n                .then(()=>{\r\n                    delete self.sensors[sensorName];\r\n                    console.log('sensor stop success: ' + sensorName);\r\n\r\n                    resolve(sensor);\r\n                })\r\n                .catch(reject);\r\n            }else{\r\n                reject(new Error('No sensor stop handle: ' + sensorName));\r\n            }\r\n        });\r\n    }\r\n\r\n    /**\r\n     * Stops watching all.\r\n     * \r\n     * @return {promise}\r\n     */\r\n    stopAll(){\r\n        let promises = [];\r\n        for(let key in this.sensors){\r\n            promises.push(this.stop(key));\r\n        }\r\n\r\n        return Promise.all(promises);\r\n    }\r\n\r\n    /**\r\n     * Adds sensor event. Multiple at same time ok.\r\n     * \r\n     * @param {string} sensorName \r\n     * @param {string} eventName \r\n     * @param {function} handle\r\n     * @return {boolean} success/failure  \r\n     */\r\n    addSensorEvent(sensorName, eventName, handle){\r\n\r\n        //Require started\r\n        let sensor = this.sensors[sensorName];\r\n        if(!sensor){\r\n            return false;\r\n        }\r\n        \r\n        let events = sensor.events;\r\n        if(!events[eventName]){\r\n            events[eventName] = [];\r\n        }\r\n\r\n        events[eventName].push(handle);\r\n\r\n        return true;\r\n    }\r\n\r\n    /**\r\n     * Removes sensor event. Only removes handle specified.\r\n     * \r\n     * @param {string} sensorName \r\n     * @param {string} eventName \r\n     * @param {function} handle\r\n     * @return {boolean} success/failure \r\n     */\r\n    removeSensorEvent(sensorName, eventName, handle){\r\n\r\n        //No sensor or event\r\n        let sensor = this.sensors[sensorName];\r\n        if(!sensor || !sensor.events[eventName]){\r\n            return false;\r\n        }\r\n\r\n        let event = sensor.events[eventName];\r\n        let index = event.indexOf(handle);\r\n\r\n        if(index >= 0){\r\n            event.splice(index, 1);\r\n\r\n            return true;\r\n        }else{\r\n            return false;\r\n        }\r\n    }\r\n\r\n    /**\r\n     * Gets usable sensor names\r\n     * \r\n     * @return {array} sensor names\r\n     */\r\n    getMappedSensorNames(){\r\n        return Object.keys(this.rawSensorWatcher.sensorHandles);\r\n    }\r\n\r\n    /**\r\n     * Current state of sensor\r\n     * @return {SensorState}\r\n     */\r\n    _SensorState(){\r\n        return {\r\n            isSensorState: true,\r\n            name: '',\r\n            stop: null,//Copied over from RawSensorWatcher object for better management.\r\n            startReturnData: null,\r\n            options: {},\r\n            events: {\r\n                data: null\r\n            }\r\n        };\r\n    }\r\n\r\n    /**\r\n     * Sets sensor state. Requires settings.events.\r\n     * \r\n     * @param {string} sensorName \r\n     * @param {object} settings \r\n     */\r\n    _setSensorState(sensorName, settings={}){\r\n        console.log('_setSensorState: ', sensorName, settings);\r\n\r\n        let sensorState;\r\n        if(this.sensors[sensorName]){\r\n            sensorState = this.sensors[sensorName];\r\n        }else{\r\n            sensorState = this._SensorState();\r\n            sensorState.name = sensorName;\r\n\r\n            this.sensors[sensorName] = sensorState;\r\n\r\n            let key;\r\n            for(key in settings){\r\n                sensorState[key] = settings[key];\r\n            }\r\n\r\n            //Events\r\n            let options = settings.options;\r\n            if(options.events){\r\n                for(key in options.events){\r\n                    this.addSensorEvent(sensorName, key, options.events[key]);\r\n                }\r\n            }\r\n\r\n            console.log('added sensor state: ', sensorState);\r\n        }\r\n\r\n        return sensorState;\r\n    }\r\n\r\n    /**\r\n     * Gets number of times sensor created\r\n     * \r\n     * @param {String} sensorName \r\n     * @return {Number} sensor creation count\r\n     */\r\n    _getSensorCreationCount(sensorName){\r\n        return (!!this.sensorCreationCounts[sensorName]) ? this.sensorCreationCounts[sensorName] : 0;\r\n    }\r\n\r\n    /**\r\n     * Increment sensor creation count\r\n     * \r\n     * @param {String} sensorName \r\n     * @return {Number} sensor creation count\r\n     */\r\n    _incSensorCreationCount(sensorName){\r\n        if(!Number.isInteger(this.sensorCreationCounts[sensorName])){\r\n            this.sensorCreationCounts[sensorName] = 0;\r\n        }\r\n\r\n        return ++this.sensorCreationCounts[sensorName];\r\n    }\r\n\r\n    /**\r\n     * Data event used when no event to handle sensor data is provided.\r\n     * Stringifies data and logs.\r\n     * \r\n     * @param {String} sensorName \r\n     * @return {Function}\r\n     */\r\n    _getDefaultDataEvent(sensorName){\r\n        return (data)=>{\r\n            if(data && typeof data === 'object'){\r\n                let oldData = data;\r\n                let cache = [];\r\n                data = JSON.stringify(data, function(key, val){\r\n                    if(val && typeof val === 'object'){\r\n\r\n                        //Ignore duplicates\r\n                        if(cache.indexOf(val) >= 0){\r\n                            return;\r\n                        }\r\n\r\n                        cache.push(val);\r\n                    }\r\n\r\n                    return val;\r\n                });\r\n                cache = null;\r\n            }\r\n            console.log('sensor: ' + sensorName, String(new Date()), data);\r\n        }\r\n    }\r\n}\r\n\r\nmodule.exports = SensorHandler;",
+    "content": "const BrowserSensorWatcher = require('./browser-sensor-watcher');\r\nlet rawSensorWatcher;\r\n\r\n/**\r\n * Main class for handling sensors.\r\n * This class allows get, watch, etc. of sensors.\r\n */\r\nclass SensorHandler {\r\n\r\n    constructor(env='browser'){\r\n\r\n        //Override with updateSensorListeners\r\n        if(env === 'browser'){\r\n            rawSensorWatcher = this.rawSensorWatcher = new BrowserSensorWatcher();\r\n        }\r\n\r\n        //SensorState mapped by sensor name\r\n        this.sensors = {\r\n            //\r\n        };\r\n\r\n        //Sensor counts stored accross start and stop watching to make sure async starting and stopping doesn't cause bugs.\r\n        this.sensorCreationCounts = {\r\n           // \r\n        };\r\n    }\r\n\r\n    /**\r\n     * Get sensor once. Should stop watching sensor if newly made.\r\n     * \r\n     * @param {string} sensorName \r\n     */\r\n    get(sensorName){\r\n        let self = this;\r\n        return new Promise((resolve, reject)=>{\r\n            let sensorCreationCount = self._getSensorCreationCount() + 1;\r\n            let handle = (sensorState)=>{\r\n                //resolve(sensorState);\r\n\r\n                //Only stop if no new watches happened.\r\n                if(!(self._getSensorCreationCount() > sensorCreationCount)){\r\n                    self.stop(sensorName)\r\n                    .then(()=>{\r\n                        resolve(sensorState);\r\n                    });\r\n                }else{\r\n                    resolve(sensorState);\r\n                }\r\n            };\r\n            self.watch(sensorName, {\r\n                events: {\r\n                    data: handle\r\n                }\r\n            });\r\n        });\r\n    }\r\n\r\n    /**\r\n     * Watch sensor from RawSensorWatcher. Ignores duplicates.\r\n     * options: {\r\n     *   events: {\r\n     *     data: function(data){}\r\n     *   }\r\n     * }\r\n     * \r\n     * @param {string} sensorName\r\n     * @param {object} options optional options\r\n     * @return {promise} promise resolving SensorState\r\n     */\r\n    watch(sensorName, options={}){\r\n        const self = this;\r\n        \r\n        //data required(use console log if nothing)\r\n        if(!options.events){options.events = {};}\r\n        if(!options.events.data){options.events.data = this._getDefaultDataEvent(sensorName);}\r\n\r\n        return new Promise((resolve, reject)=>{\r\n\r\n            const onResolve = (sensorState)=>{\r\n                self._incSensorCreationCount(sensorName);\r\n                resolve(sensorState);\r\n            };\r\n\r\n            if(self.sensors[sensorName]){\r\n                return onResolve(self.sensors[sensorName]);\r\n            }\r\n\r\n            if(rawSensorWatcher.sensorHandles[sensorName]){\r\n                rawSensorWatcher.sensorHandles[sensorName].start(options)\r\n                .then(function(startReturnData){\r\n                    let sensorState = self._setSensorState(sensorName, {\r\n                        options: options,\r\n                        startReturnData: startReturnData,\r\n                        stop: rawSensorWatcher.sensorHandles[sensorName].stop//Set to state because may implement multiple watching later.\r\n                    });\r\n                    return onResolve(sensorState);\r\n                })\r\n                .catch(reject);\r\n            }else{\r\n                return reject(new Error('No raw sensor: ' + sensorName));\r\n            }\r\n        });\r\n    }\r\n\r\n    /**\r\n     * Watches all available sensors.\r\n     * \r\n     * @return {promise} Resolves array of SensorStates. However allows for failing returning null.\r\n     */\r\n    watchAll(){\r\n        let possibleSensors = rawSensorWatcher.sensorHandles;\r\n        let promises = [];\r\n        for(let key in possibleSensors){\r\n            if(key === 'test'){continue;}\r\n            let p = new Promise((resolve, reject)=>{\r\n                this.watch(key)\r\n                .then(resolve)\r\n                .catch(()=>{\r\n                    resolve(null);\r\n                });\r\n            });\r\n            promises.push(p);\r\n        }\r\n\r\n        return Promise.all(promises);\r\n    }\r\n\r\n    /**\r\n     * Stops watching sensor.\r\n     * \r\n     * @param {string} sensorName\r\n     * @return {promise}\r\n     */\r\n    stop(sensorName){\r\n        let self = this;\r\n        return new Promise((resolve, reject)=>{\r\n            let sensor = self.sensors[sensorName];\r\n            if(!sensor){\r\n                reject(new Error('No sensor: ' + sensorName));\r\n            }\r\n\r\n            if(sensor.stop){\r\n                sensor.stop(...sensor.startReturnData)\r\n                .then(()=>{\r\n                    delete self.sensors[sensorName];\r\n                    console.log('sensor stop success: ' + sensorName);\r\n\r\n                    resolve(sensor);\r\n                })\r\n                .catch(reject);\r\n            }else{\r\n                reject(new Error('No sensor stop handle: ' + sensorName));\r\n            }\r\n        });\r\n    }\r\n\r\n    /**\r\n     * Stops watching all.\r\n     * \r\n     * @return {promise}\r\n     */\r\n    stopAll(){\r\n        let promises = [];\r\n        for(let key in this.sensors){\r\n            promises.push(this.stop(key));\r\n        }\r\n\r\n        return Promise.all(promises);\r\n    }\r\n\r\n    /**\r\n     * Adds sensor event. Multiple at same time ok.\r\n     * \r\n     * @param {string} sensorName \r\n     * @param {string} eventName \r\n     * @param {function} handle\r\n     * @return {boolean} success/failure  \r\n     */\r\n    addSensorEvent(sensorName, eventName, handle){\r\n\r\n        //Require started\r\n        let sensor = this.sensors[sensorName];\r\n        if(!sensor){\r\n            return false;\r\n        }\r\n        \r\n        let events = sensor.events;\r\n        if(!events[eventName]){\r\n            events[eventName] = [];\r\n        }\r\n\r\n        events[eventName].push(handle);\r\n\r\n        return true;\r\n    }\r\n\r\n    /**\r\n     * Removes sensor event. Only removes handle specified.\r\n     * \r\n     * @param {string} sensorName \r\n     * @param {string} eventName \r\n     * @param {function} handle\r\n     * @return {boolean} success/failure \r\n     */\r\n    removeSensorEvent(sensorName, eventName, handle){\r\n\r\n        //No sensor or event\r\n        let sensor = this.sensors[sensorName];\r\n        if(!sensor || !sensor.events[eventName]){\r\n            return false;\r\n        }\r\n\r\n        let event = sensor.events[eventName];\r\n        let index = event.indexOf(handle);\r\n\r\n        if(index >= 0){\r\n            event.splice(index, 1);\r\n\r\n            return true;\r\n        }else{\r\n            return false;\r\n        }\r\n    }\r\n\r\n    /**\r\n     * Update registered sensor listeners.\r\n     * Pass handle with one argument.\r\n     * MUST return.\r\n     * Dynamic updating during watching may result in bugs.\r\n     * \r\n     * @param {Function} handle handle taking object map of registered SensorListeners \r\n     */\r\n    updateSensorListeners(callback){\r\n        this.rawSensorWatcher = callback(this.rawSensorWatcher);\r\n    }\r\n\r\n    /**\r\n     * Gets usable sensor names\r\n     * \r\n     * @return {array} sensor names\r\n     */\r\n    getMappedSensorNames(){\r\n        return Object.keys(this.rawSensorWatcher.sensorHandles);\r\n    }\r\n\r\n    /**\r\n     * Current state of sensor\r\n     * @return {SensorState}\r\n     */\r\n    _SensorState(){\r\n        return {\r\n            isSensorState: true,\r\n            name: '',\r\n            stop: null,//Copied over from RawSensorWatcher object for better management.\r\n            startReturnData: null,\r\n            options: {},\r\n            events: {\r\n                data: null\r\n            }\r\n        };\r\n    }\r\n\r\n    /**\r\n     * Sets sensor state. Requires settings.events.\r\n     * \r\n     * @param {string} sensorName \r\n     * @param {object} settings \r\n     */\r\n    _setSensorState(sensorName, settings={}){\r\n        console.log('_setSensorState: ', sensorName, settings);\r\n\r\n        let sensorState;\r\n        if(this.sensors[sensorName]){\r\n            sensorState = this.sensors[sensorName];\r\n        }else{\r\n            sensorState = this._SensorState();\r\n            sensorState.name = sensorName;\r\n\r\n            this.sensors[sensorName] = sensorState;\r\n\r\n            let key;\r\n            for(key in settings){\r\n                sensorState[key] = settings[key];\r\n            }\r\n\r\n            //Events\r\n            let options = settings.options;\r\n            if(options.events){\r\n                for(key in options.events){\r\n                    this.addSensorEvent(sensorName, key, options.events[key]);\r\n                }\r\n            }\r\n\r\n            console.log('added sensor state: ', sensorState);\r\n        }\r\n\r\n        return sensorState;\r\n    }\r\n\r\n    /**\r\n     * Gets number of times sensor created\r\n     * \r\n     * @param {String} sensorName \r\n     * @return {Number} sensor creation count\r\n     */\r\n    _getSensorCreationCount(sensorName){\r\n        return (!!this.sensorCreationCounts[sensorName]) ? this.sensorCreationCounts[sensorName] : 0;\r\n    }\r\n\r\n    /**\r\n     * Increment sensor creation count\r\n     * \r\n     * @param {String} sensorName \r\n     * @return {Number} sensor creation count\r\n     */\r\n    _incSensorCreationCount(sensorName){\r\n        if(!Number.isInteger(this.sensorCreationCounts[sensorName])){\r\n            this.sensorCreationCounts[sensorName] = 0;\r\n        }\r\n\r\n        return ++this.sensorCreationCounts[sensorName];\r\n    }\r\n\r\n    /**\r\n     * Data event used when no event to handle sensor data is provided.\r\n     * Stringifies data and logs.\r\n     * \r\n     * @param {String} sensorName \r\n     * @return {Function}\r\n     */\r\n    _getDefaultDataEvent(sensorName){\r\n        return (data)=>{\r\n            if(data && typeof data === 'object'){\r\n                let oldData = data;\r\n                let cache = [];\r\n                data = JSON.stringify(data, function(key, val){\r\n                    if(val && typeof val === 'object'){\r\n\r\n                        //Ignore duplicates\r\n                        if(cache.indexOf(val) >= 0){\r\n                            return;\r\n                        }\r\n\r\n                        cache.push(val);\r\n                    }\r\n\r\n                    return val;\r\n                });\r\n                cache = null;\r\n            }\r\n            console.log('sensor: ' + sensorName, String(new Date()), data);\r\n        }\r\n    }\r\n}\r\n\r\nmodule.exports = SensorHandler;",
     "static": true,
     "longname": "C:/d/projects/public/js-sensor/class/sensor-handler.js",
     "access": "public",
@@ -770,10 +770,10 @@
   {
     "__docId__": 60,
     "kind": "variable",
-    "name": "RawSensorWatcher",
+    "name": "BrowserSensorWatcher",
     "memberof": "class/sensor-handler.js",
     "static": true,
-    "longname": "class/sensor-handler.js~RawSensorWatcher",
+    "longname": "class/sensor-handler.js~BrowserSensorWatcher",
     "access": "public",
     "export": false,
     "importPath": "js-sensor/class/sensor-handler.js",
@@ -789,26 +789,6 @@
   },
   {
     "__docId__": 61,
-    "kind": "variable",
-    "name": "rawSensorWatcher",
-    "memberof": "class/sensor-handler.js",
-    "static": true,
-    "longname": "class/sensor-handler.js~rawSensorWatcher",
-    "access": "public",
-    "export": false,
-    "importPath": "js-sensor/class/sensor-handler.js",
-    "importStyle": null,
-    "description": null,
-    "lineNumber": 2,
-    "undocument": true,
-    "type": {
-      "types": [
-        "class/raw-sensor-watcher.js~RawSensorWatcher"
-      ]
-    }
-  },
-  {
-    "__docId__": 62,
     "kind": "class",
     "name": "SensorHandler",
     "memberof": "class/sensor-handler.js",
@@ -823,7 +803,7 @@
     "interface": false
   },
   {
-    "__docId__": 63,
+    "__docId__": 62,
     "kind": "constructor",
     "name": "constructor",
     "memberof": "class/sensor-handler.js~SensorHandler",
@@ -837,24 +817,7 @@
     "undocument": true
   },
   {
-    "__docId__": 64,
-    "kind": "member",
-    "name": "rawSensorWatcher",
-    "memberof": "class/sensor-handler.js~SensorHandler",
-    "static": false,
-    "longname": "class/sensor-handler.js~SensorHandler#rawSensorWatcher",
-    "access": "public",
-    "description": null,
-    "lineNumber": 12,
-    "undocument": true,
-    "type": {
-      "types": [
-        "*"
-      ]
-    }
-  },
-  {
-    "__docId__": 65,
+    "__docId__": 63,
     "kind": "member",
     "name": "sensors",
     "memberof": "class/sensor-handler.js~SensorHandler",
@@ -862,7 +825,7 @@
     "longname": "class/sensor-handler.js~SensorHandler#sensors",
     "access": "public",
     "description": null,
-    "lineNumber": 15,
+    "lineNumber": 18,
     "undocument": true,
     "type": {
       "types": [
@@ -871,7 +834,7 @@
     }
   },
   {
-    "__docId__": 66,
+    "__docId__": 64,
     "kind": "member",
     "name": "sensorCreationCounts",
     "memberof": "class/sensor-handler.js~SensorHandler",
@@ -879,7 +842,7 @@
     "longname": "class/sensor-handler.js~SensorHandler#sensorCreationCounts",
     "access": "public",
     "description": null,
-    "lineNumber": 20,
+    "lineNumber": 23,
     "undocument": true,
     "type": {
       "types": [
@@ -888,7 +851,7 @@
     }
   },
   {
-    "__docId__": 67,
+    "__docId__": 65,
     "kind": "method",
     "name": "get",
     "memberof": "class/sensor-handler.js~SensorHandler",
@@ -898,7 +861,7 @@
     "longname": "class/sensor-handler.js~SensorHandler#get",
     "access": "public",
     "description": "Get sensor once. Should stop watching sensor if newly made.",
-    "lineNumber": 30,
+    "lineNumber": 33,
     "params": [
       {
         "nullable": null,
@@ -918,7 +881,7 @@
     }
   },
   {
-    "__docId__": 68,
+    "__docId__": 66,
     "kind": "method",
     "name": "watch",
     "memberof": "class/sensor-handler.js~SensorHandler",
@@ -928,7 +891,7 @@
     "longname": "class/sensor-handler.js~SensorHandler#watch",
     "access": "public",
     "description": "Watch sensor from RawSensorWatcher. Ignores duplicates.\noptions: {\n  events: {\n    data: function(data){}\n  }\n}",
-    "lineNumber": 67,
+    "lineNumber": 70,
     "params": [
       {
         "nullable": null,
@@ -961,7 +924,7 @@
     }
   },
   {
-    "__docId__": 69,
+    "__docId__": 67,
     "kind": "method",
     "name": "watchAll",
     "memberof": "class/sensor-handler.js~SensorHandler",
@@ -971,7 +934,7 @@
     "longname": "class/sensor-handler.js~SensorHandler#watchAll",
     "access": "public",
     "description": "Watches all available sensors.",
-    "lineNumber": 107,
+    "lineNumber": 110,
     "return": {
       "nullable": null,
       "types": [
@@ -983,7 +946,7 @@
     "params": []
   },
   {
-    "__docId__": 70,
+    "__docId__": 68,
     "kind": "method",
     "name": "stop",
     "memberof": "class/sensor-handler.js~SensorHandler",
@@ -993,7 +956,7 @@
     "longname": "class/sensor-handler.js~SensorHandler#stop",
     "access": "public",
     "description": "Stops watching sensor.",
-    "lineNumber": 131,
+    "lineNumber": 134,
     "params": [
       {
         "nullable": null,
@@ -1016,7 +979,7 @@
     }
   },
   {
-    "__docId__": 71,
+    "__docId__": 69,
     "kind": "method",
     "name": "stopAll",
     "memberof": "class/sensor-handler.js~SensorHandler",
@@ -1026,7 +989,7 @@
     "longname": "class/sensor-handler.js~SensorHandler#stopAll",
     "access": "public",
     "description": "Stops watching all.",
-    "lineNumber": 159,
+    "lineNumber": 162,
     "return": {
       "nullable": null,
       "types": [
@@ -1038,7 +1001,7 @@
     "params": []
   },
   {
-    "__docId__": 72,
+    "__docId__": 70,
     "kind": "method",
     "name": "addSensorEvent",
     "memberof": "class/sensor-handler.js~SensorHandler",
@@ -1048,7 +1011,7 @@
     "longname": "class/sensor-handler.js~SensorHandler#addSensorEvent",
     "access": "public",
     "description": "Adds sensor event. Multiple at same time ok.",
-    "lineNumber": 176,
+    "lineNumber": 179,
     "params": [
       {
         "nullable": null,
@@ -1091,7 +1054,7 @@
     }
   },
   {
-    "__docId__": 73,
+    "__docId__": 71,
     "kind": "method",
     "name": "removeSensorEvent",
     "memberof": "class/sensor-handler.js~SensorHandler",
@@ -1101,7 +1064,7 @@
     "longname": "class/sensor-handler.js~SensorHandler#removeSensorEvent",
     "access": "public",
     "description": "Removes sensor event. Only removes handle specified.",
-    "lineNumber": 202,
+    "lineNumber": 205,
     "params": [
       {
         "nullable": null,
@@ -1141,6 +1104,49 @@
       ],
       "spread": false,
       "description": "success/failure"
+    }
+  },
+  {
+    "__docId__": 72,
+    "kind": "method",
+    "name": "updateSensorListeners",
+    "memberof": "class/sensor-handler.js~SensorHandler",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "class/sensor-handler.js~SensorHandler#updateSensorListeners",
+    "access": "public",
+    "description": "Update registered sensor listeners.\nPass handle with one argument.\nMUST return.\nDynamic updating during watching may result in bugs.",
+    "lineNumber": 233,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "Function"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "handle",
+        "description": "handle taking object map of registered SensorListeners"
+      }
+    ],
+    "return": null
+  },
+  {
+    "__docId__": 73,
+    "kind": "member",
+    "name": "rawSensorWatcher",
+    "memberof": "class/sensor-handler.js~SensorHandler",
+    "static": false,
+    "longname": "class/sensor-handler.js~SensorHandler#rawSensorWatcher",
+    "access": "public",
+    "description": null,
+    "lineNumber": 234,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
     }
   },
   {
@@ -1154,7 +1160,7 @@
     "longname": "class/sensor-handler.js~SensorHandler#getMappedSensorNames",
     "access": "public",
     "description": "Gets usable sensor names",
-    "lineNumber": 227,
+    "lineNumber": 242,
     "return": {
       "nullable": null,
       "types": [
@@ -1176,7 +1182,7 @@
     "longname": "class/sensor-handler.js~SensorHandler#_SensorState",
     "access": "private",
     "description": "Current state of sensor",
-    "lineNumber": 235,
+    "lineNumber": 250,
     "return": {
       "nullable": null,
       "types": [
@@ -1198,7 +1204,7 @@
     "longname": "class/sensor-handler.js~SensorHandler#_setSensorState",
     "access": "private",
     "description": "Sets sensor state. Requires settings.events.",
-    "lineNumber": 254,
+    "lineNumber": 269,
     "params": [
       {
         "nullable": null,
@@ -1238,7 +1244,7 @@
     "longname": "class/sensor-handler.js~SensorHandler#_getSensorCreationCount",
     "access": "private",
     "description": "Gets number of times sensor created",
-    "lineNumber": 291,
+    "lineNumber": 306,
     "params": [
       {
         "nullable": null,
@@ -1271,7 +1277,7 @@
     "longname": "class/sensor-handler.js~SensorHandler#_incSensorCreationCount",
     "access": "private",
     "description": "Increment sensor creation count",
-    "lineNumber": 301,
+    "lineNumber": 316,
     "params": [
       {
         "nullable": null,
@@ -1304,7 +1310,7 @@
     "longname": "class/sensor-handler.js~SensorHandler#_getDefaultDataEvent",
     "access": "private",
     "description": "Data event used when no event to handle sensor data is provided.\nStringifies data and logs.",
-    "lineNumber": 316,
+    "lineNumber": 331,
     "params": [
       {
         "nullable": null,
@@ -1328,7 +1334,7 @@
   },
   {
     "kind": "index",
-    "content": " # JS Sensor\r\n Sensor watcher of JavaScript sensor events.\r\n This module is designed to have only basic functionality.\r\n Any more complex functionality should be achieved through extending this module.\r\n\r\n ## Installation\r\n 1. Install node(including npm)\r\n 2. \"npm install\" in base directory\r\n\r\n ## Usage\r\n \r\n ```\r\n const jsSensor = new require('js-sensor');\r\n \r\n //Get\r\n jsSensor.get('deviceMotion')\r\n .then((data)=>{\r\n     console.log('get', data);\r\n });\r\n\r\n //Watch\r\n jsSensor.watch('deviceOrientation',\r\n {\r\n     events: {\r\n         data: (data)=>{\r\n             console.log('watch', data);\r\n         }\r\n     }\r\n });\r\n ```\r\n\r\n ## Events\r\n * watchPosition\r\n * getUserMedia\r\n * deviceOrientation\r\n * deviceLight\r\n * deviceProximity\r\n * deviceMotion\r\n * test\r\n\r\n ## Tests\r\n Run `npm run test`\r\n\r\n ## Reports\r\n * Built when running tests.\r\n * Eslint\r\n\r\n ## Documentation\r\n * Esdoc",
+    "content": " # JS Sensor\r\n Sensor watcher of JavaScript sensor events.\r\n This module is designed to have only basic functionality.\r\n Any more complex functionality should be achieved through extending this module.\r\n\r\n ## Environment\r\n Should work and be extensible using any new JavaScript environment(node, browser).\r\n Default event listeners provided via browser-sensor-watcher.\r\n Possible to use own via extension.\r\n\r\n ## Installation\r\n 1. Install node(including npm)\r\n 2. \"npm install\" in base directory\r\n\r\n ## Usage\r\n The full api can be checked from the documentation. See \"Documentation\" below.\r\n\r\n Basic usage can be seen below:\r\n \r\n ```\r\n const jsSensor = new require('js-sensor');\r\n\r\n //Get sensor list\r\n console.log('names:' jsSensor.getMappedSensorNames());\r\n\r\n //Update/extend\r\n jsSensor.updateSensorListeners((sensorListenerMap)=>{\r\n     sensorListenerMap['myListener'] = {\r\n         start: (options)=>{\r\n             const data = '...HANDLE HERE';\r\n             options.events.data(data);\r\n         },\r\n         stop: ()=>{\r\n             //STOP\r\n         },\r\n         check: ()=>{\r\n             //CHECK FOR AVAILABILITY\r\n             return true;\r\n         }\r\n     };\r\n     return sensorListenerMap;\r\n });\r\n\r\n //Get\r\n jsSensor.get('deviceMotion')\r\n .then((data)=>{\r\n     console.log('get', data);\r\n });\r\n\r\n //Watch\r\n jsSensor.watch('deviceOrientation',\r\n {\r\n     events: {\r\n         data: (data)=>{\r\n             console.log('watch', data);\r\n         }\r\n     }\r\n });\r\n\r\n //Stop\r\n jsSensor.stop('deviceOrientation);\r\n\r\n //WatchAll\r\n jsSensor.watchAll();\r\n //...wait a while\r\n //StopAll\r\n jsSensor.stopAll()\r\n ```\r\n\r\n ## Events\r\n * watchPosition\r\n * getUserMedia\r\n * deviceOrientation\r\n * deviceLight\r\n * deviceProximity\r\n * deviceMotion\r\n * test\r\n\r\n ## Tests\r\n Run `npm run test`\r\n\r\n ## Reports\r\n * Built when running tests.\r\n * Eslint\r\n\r\n ## Documentation\r\n * Esdoc(./docs/)",
     "longname": "C:\\d\\projects\\public\\js-sensor\\README.md",
     "name": "./README.md",
     "static": true,
@@ -1336,7 +1342,7 @@
   },
   {
     "kind": "packageJSON",
-    "content": "{\n  \"name\": \"js-sensor\",\n  \"main\": \"./class/js-sensor.js\",\n  \"version\": \"1.0.0\",\n  \"description\": \"JavaScript abstract sensor library.\",\n  \"directories\": {\n    \"example\": \"example\",\n    \"test\": \"test\"\n  },\n  \"scripts\": {\n    \"esdoc\": \"./node_modules/.bin/esdoc -c ./.esdoc.json\",\n    \"eslint\": \"gulp eslint\",\n    \"browserify\": \"browserify ./class/js-sensor.js ./class/raw-sensor-watcher.js ./class/sensor-handler.js -o ./dist/bundle.js\",\n    \"build\": \"npm run browserify\",\n    \"build-all\": \"npm run build && npm run build-tests\",\n    \"build-tests\": \"browserify ./test/js-sensor.test.js ./test/raw-sensor-watcher.test.js ./test/sensor-handler.test.js -o ./dist/tests.js\",\n    \"test\": \"npm run build-all && npm run esdoc && npm run eslint && start ./test/mocha-html/index.html\",\n    \"example\": \"npm run build && start ./example/index.html\",\n    \"server\": \"browser-sync start --server\"\n  },\n  \"author\": \"Damien Golding\",\n  \"license\": \"MIT\",\n  \"devDependencies\": {\n    \"browser-sync\": \"^2.18.13\",\n    \"browserify\": \"^14.4.0\",\n    \"chai\": \"^4.1.2\",\n    \"esdoc\": \"^1.0.4\",\n    \"esdoc-standard-plugin\": \"^1.0.0\",\n    \"eslint\": \"^4.12.1\",\n    \"eslint-html-reporter\": \"^0.5.2\",\n    \"gulp\": \"^3.9.1\",\n    \"gulp-eslint\": \"^4.0.0\",\n    \"mocha\": \"^4.0.1\"\n  }\n}\n",
+    "content": "{\n  \"name\": \"js-sensor\",\n  \"main\": \"./class/js-sensor.js\",\n  \"version\": \"1.0.0\",\n  \"description\": \"JavaScript sensor library for native input sensors.\",\n  \"directories\": {\n    \"example\": \"example\",\n    \"test\": \"test\"\n  },\n  \"scripts\": {\n    \"esdoc\": \"./node_modules/.bin/esdoc -c ./.esdoc.json\",\n    \"eslint\": \"gulp eslint\",\n    \"browserify\": \"browserify ./class/js-sensor.js ./class/browser-sensor-watcher.js ./class/sensor-handler.js -o ./dist/bundle.js\",\n    \"build\": \"npm run browserify\",\n    \"build-all\": \"npm run build && npm run build-tests\",\n    \"build-tests\": \"browserify ./test/js-sensor.test.js ./test/browser-sensor-watcher.test.js ./test/sensor-handler.test.js -o ./dist/tests.js\",\n    \"test\": \"npm run build-all && npm run esdoc && npm run eslint && start ./test/mocha-html/index.html\",\n    \"example\": \"npm run build && start ./example/index.html\",\n    \"server\": \"browser-sync start --server\"\n  },\n  \"author\": \"Damien Golding\",\n  \"license\": \"MIT\",\n  \"devDependencies\": {\n    \"browser-sync\": \"^2.18.13\",\n    \"browserify\": \"^14.4.0\",\n    \"chai\": \"^4.1.2\",\n    \"esdoc\": \"^1.0.4\",\n    \"esdoc-standard-plugin\": \"^1.0.0\",\n    \"eslint\": \"^4.12.1\",\n    \"eslint-html-reporter\": \"^0.5.2\",\n    \"gulp\": \"^3.9.1\",\n    \"gulp-eslint\": \"^4.0.0\",\n    \"mocha\": \"^4.0.1\"\n  }\n}\n",
     "longname": "C:\\d\\projects\\public\\js-sensor\\package.json",
     "name": "package.json",
     "static": true,
@@ -1344,6 +1350,43 @@
   },
   {
     "__docId__": 80,
+    "kind": "testFile",
+    "name": "test/browser-sensor-watcher.test.js",
+    "content": "const BrowserSensorWatcher = require('../class/browser-sensor-watcher');\r\n\r\nconst browserSensorWatcher = new BrowserSensorWatcher();\r\n\r\ndescribe('BrowserSensorWatcher', ()=>{\r\n    it('_getWindowEventListenerObject', ()=>{\r\n        let object = browserSensorWatcher._getWindowEventListenerObject('devicemotion');\r\n\r\n        chai.expect(object).to.be.an('object');\r\n        chai.expect(object).to.have.property('start');\r\n        chai.expect(object).to.have.property('stop');\r\n        chai.expect(object).to.have.property('check');\r\n    });\r\n});",
+    "static": true,
+    "longname": "C:/d/projects/public/js-sensor/test/browser-sensor-watcher.test.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1
+  },
+  {
+    "__docId__": 81,
+    "kind": "test",
+    "name": "describe0",
+    "testId": 0,
+    "memberof": "test/browser-sensor-watcher.test.js",
+    "testDepth": 0,
+    "static": true,
+    "longname": "test/browser-sensor-watcher.test.js~describe0",
+    "access": null,
+    "description": "BrowserSensorWatcher",
+    "lineNumber": 5
+  },
+  {
+    "__docId__": 82,
+    "kind": "test",
+    "name": "it1",
+    "testId": 1,
+    "memberof": "test/browser-sensor-watcher.test.js~describe0",
+    "testDepth": 1,
+    "static": true,
+    "longname": "test/browser-sensor-watcher.test.js~describe0.it1",
+    "access": null,
+    "description": "_getWindowEventListenerObject",
+    "lineNumber": 6
+  },
+  {
+    "__docId__": 83,
     "kind": "testFile",
     "name": "test/js-sensor.test.js",
     "content": "const JsSensor = require('../class/js-sensor');\r\n\r\nconst jsSensor = new JsSensor();\r\n\r\ndescribe('JsSensor', ()=>{\r\n    it('construction', ()=>{\r\n        chai.expect(jsSensor).to.be.an('object');\r\n    });\r\n});",
@@ -1354,53 +1397,16 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 81,
-    "kind": "test",
-    "name": "describe0",
-    "testId": 0,
-    "memberof": "test/js-sensor.test.js",
-    "testDepth": 0,
-    "static": true,
-    "longname": "test/js-sensor.test.js~describe0",
-    "access": null,
-    "description": "JsSensor",
-    "lineNumber": 5
-  },
-  {
-    "__docId__": 82,
-    "kind": "test",
-    "name": "it1",
-    "testId": 1,
-    "memberof": "test/js-sensor.test.js~describe0",
-    "testDepth": 1,
-    "static": true,
-    "longname": "test/js-sensor.test.js~describe0.it1",
-    "access": null,
-    "description": "construction",
-    "lineNumber": 6
-  },
-  {
-    "__docId__": 83,
-    "kind": "testFile",
-    "name": "test/raw-sensor-watcher.test.js",
-    "content": "const RawSensorWatcher = require('../class/raw-sensor-watcher');\r\n\r\nconst rawSensorWatcher = new RawSensorWatcher();\r\n\r\ndescribe('RawSensorWatcher', ()=>{\r\n    it('_getWindowEventListenerObject', ()=>{\r\n        let object = rawSensorWatcher._getWindowEventListenerObject('devicemotion');\r\n\r\n        chai.expect(object).to.be.an('object');\r\n        chai.expect(object).to.have.property('start');\r\n        chai.expect(object).to.have.property('stop');\r\n        chai.expect(object).to.have.property('check');\r\n    });\r\n});",
-    "static": true,
-    "longname": "C:/d/projects/public/js-sensor/test/raw-sensor-watcher.test.js",
-    "access": null,
-    "description": null,
-    "lineNumber": 1
-  },
-  {
     "__docId__": 84,
     "kind": "test",
     "name": "describe2",
     "testId": 2,
-    "memberof": "test/raw-sensor-watcher.test.js",
+    "memberof": "test/js-sensor.test.js",
     "testDepth": 0,
     "static": true,
-    "longname": "test/raw-sensor-watcher.test.js~describe2",
+    "longname": "test/js-sensor.test.js~describe2",
     "access": null,
-    "description": "RawSensorWatcher",
+    "description": "JsSensor",
     "lineNumber": 5
   },
   {
@@ -1408,12 +1414,12 @@
     "kind": "test",
     "name": "it3",
     "testId": 3,
-    "memberof": "test/raw-sensor-watcher.test.js~describe2",
+    "memberof": "test/js-sensor.test.js~describe2",
     "testDepth": 1,
     "static": true,
-    "longname": "test/raw-sensor-watcher.test.js~describe2.it3",
+    "longname": "test/js-sensor.test.js~describe2.it3",
     "access": null,
-    "description": "_getWindowEventListenerObject",
+    "description": "construction",
     "lineNumber": 6
   },
   {

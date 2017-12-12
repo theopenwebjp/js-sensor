@@ -10,10 +10,10 @@
   "scripts": {
     "esdoc": "./node_modules/.bin/esdoc -c ./.esdoc.json",
     "eslint": "gulp eslint",
-    "browserify": "browserify ./class/js-sensor.js ./class/raw-sensor-watcher.js ./class/sensor-handler.js -o ./dist/bundle.js",
+    "browserify": "browserify ./class/js-sensor.js ./class/browser-sensor-watcher.js ./class/sensor-handler.js -o ./dist/bundle.js",
     "build": "npm run browserify",
     "build-all": "npm run build && npm run build-tests",
-    "build-tests": "browserify ./test/js-sensor.test.js ./test/raw-sensor-watcher.test.js ./test/sensor-handler.test.js -o ./dist/tests.js",
+    "build-tests": "browserify ./test/js-sensor.test.js ./test/browser-sensor-watcher.test.js ./test/sensor-handler.test.js -o ./dist/tests.js",
     "test": "npm run build-all && npm run esdoc && npm run eslint && start ./test/mocha-html/index.html",
     "example": "npm run build && start ./example/index.html",
     "server": "browser-sync start --server"

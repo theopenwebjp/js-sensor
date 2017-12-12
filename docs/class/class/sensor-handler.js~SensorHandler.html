@@ -8,7 +8,7 @@
   <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
   <script src="script/prettify/prettify.js"></script>
   <script src="script/manual.js"></script>
-<meta name="description" content="JavaScript abstract sensor library."><meta property="twitter:card" content="summary"><meta property="twitter:title" content="js-sensor"><meta property="twitter:description" content="JavaScript abstract sensor library."></head>
+<meta name="description" content="JavaScript sensor library for native input sensors."><meta property="twitter:card" content="summary"><meta property="twitter:title" content="js-sensor"><meta property="twitter:description" content="JavaScript sensor library for native input sensors."></head>
 <body class="layout-container" data-ice="rootContainer">
 
 <header>
@@ -29,12 +29,11 @@
 <nav class="navigation" data-ice="nav"><div>
   <ul>
     
-  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/class/js-sensor.js~JsSensor.html">JsSensor</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/class/raw-sensor-watcher.js~RawSensorWatcher.html">RawSensorWatcher</a></span></span></li>
+  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/class/browser-sensor-watcher.js~BrowserSensorWatcher.html">BrowserSensorWatcher</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/class/js-sensor.js~JsSensor.html">JsSensor</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/class/sensor-handler.js~SensorHandler.html">SensorHandler</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-SensorHandler">SensorHandler</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-RawSensorWatcher">RawSensorWatcher</a></span></span></li>
-<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-rawSensorWatcher">rawSensorWatcher</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-BrowserSensorWatcher">BrowserSensorWatcher</a></span></span></li>
 </ul>
 </div>
 </nav>
@@ -400,6 +399,35 @@ This class allows get, watch, etc. of sensors.</p>
           
           
           
+          <span class="code" data-ice="name"><span><a href="class/class/sensor-handler.js~SensorHandler.html#instance-method-updateSensorListeners">updateSensorListeners</a></span></span><span class="code" data-ice="signature">(handle: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function">Function</a></span>)</span>
+        </p>
+      </div>
+      <div>
+        
+        
+        <div data-ice="description"><p>Update registered sensor listeners.</p>
+</div>
+      </div>
+    </td>
+    <td>
+      
+      
+    </td>
+  </tr>
+<tr data-ice="target">
+    <td>
+      <span class="access" data-ice="access">public</span>
+      
+      
+      
+      <span class="override" data-ice="override"></span>
+    </td>
+    <td>
+      <div>
+        <p>
+          
+          
+          
           <span class="code" data-ice="name"><span><a href="class/class/sensor-handler.js~SensorHandler.html#instance-method-watch">watch</a></span></span><span class="code" data-ice="signature">(sensorName: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>, options: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">object</a></span>): <span>promise</span></span>
         </p>
       </div>
@@ -663,7 +691,7 @@ This class allows get, watch, etc. of sensors.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/class/sensor-handler.js.html#lineNumber12">source</a></span></span>
+      <span data-ice="source"><span><a href="file/class/sensor-handler.js.html#lineNumber234">source</a></span></span>
     </span>
   </h3>
 
@@ -706,7 +734,7 @@ This class allows get, watch, etc. of sensors.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/class/sensor-handler.js.html#lineNumber20">source</a></span></span>
+      <span data-ice="source"><span><a href="file/class/sensor-handler.js.html#lineNumber23">source</a></span></span>
     </span>
   </h3>
 
@@ -749,7 +777,7 @@ This class allows get, watch, etc. of sensors.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/class/sensor-handler.js.html#lineNumber15">source</a></span></span>
+      <span data-ice="source"><span><a href="file/class/sensor-handler.js.html#lineNumber18">source</a></span></span>
     </span>
   </h3>
 
@@ -795,7 +823,7 @@ This class allows get, watch, etc. of sensors.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/class/sensor-handler.js.html#lineNumber176">source</a></span></span>
+      <span data-ice="source"><span><a href="file/class/sensor-handler.js.html#lineNumber179">source</a></span></span>
     </span>
   </h3>
 
@@ -880,7 +908,7 @@ This class allows get, watch, etc. of sensors.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/class/sensor-handler.js.html#lineNumber30">source</a></span></span>
+      <span data-ice="source"><span><a href="file/class/sensor-handler.js.html#lineNumber33">source</a></span></span>
     </span>
   </h3>
 
@@ -952,7 +980,7 @@ This class allows get, watch, etc. of sensors.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/class/sensor-handler.js.html#lineNumber227">source</a></span></span>
+      <span data-ice="source"><span><a href="file/class/sensor-handler.js.html#lineNumber242">source</a></span></span>
     </span>
   </h3>
 
@@ -1009,7 +1037,7 @@ This class allows get, watch, etc. of sensors.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/class/sensor-handler.js.html#lineNumber202">source</a></span></span>
+      <span data-ice="source"><span><a href="file/class/sensor-handler.js.html#lineNumber205">source</a></span></span>
     </span>
   </h3>
 
@@ -1094,7 +1122,7 @@ This class allows get, watch, etc. of sensors.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/class/sensor-handler.js.html#lineNumber131">source</a></span></span>
+      <span data-ice="source"><span><a href="file/class/sensor-handler.js.html#lineNumber134">source</a></span></span>
     </span>
   </h3>
 
@@ -1166,7 +1194,7 @@ This class allows get, watch, etc. of sensors.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/class/sensor-handler.js.html#lineNumber159">source</a></span></span>
+      <span data-ice="source"><span><a href="file/class/sensor-handler.js.html#lineNumber162">source</a></span></span>
     </span>
   </h3>
 
@@ -1211,6 +1239,70 @@ This class allows get, watch, etc. of sensors.</p>
   
 </div>
 <div class="detail" data-ice="detail">
+  <h3 data-ice="anchor" id="instance-method-updateSensorListeners">
+    <span class="access" data-ice="access">public</span>
+    
+    
+    
+    
+    
+    <span class="code" data-ice="name">updateSensorListeners</span><span class="code" data-ice="signature">(handle: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function">Function</a></span>)</span>
+    <span class="right-info">
+      
+      
+      <span data-ice="source"><span><a href="file/class/sensor-handler.js.html#lineNumber233">source</a></span></span>
+    </span>
+  </h3>
+
+  
+  
+  
+  <div data-ice="description"><p>Update registered sensor listeners.
+Pass handle with one argument.
+MUST return.
+Dynamic updating during watching may result in bugs.</p>
+</div>
+
+  
+
+  <div data-ice="properties"><div data-ice="properties">
+  <h4 data-ice="title">Params:</h4>
+  <table class="params">
+    <thead>
+    <tr><td>Name</td><td>Type</td><td>Attribute</td><td>Description</td></tr>
+    </thead>
+    <tbody>
+    
+    <tr data-ice="property" data-depth="0">
+      <td data-ice="name" class="code" data-depth="0">handle</td>
+      <td data-ice="type" class="code"><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function">Function</a></span></td>
+      <td data-ice="appendix"></td>
+      <td data-ice="description"><p>handle taking object map of registered SensorListeners</p>
+</td>
+    </tr>
+</tbody>
+  </table>
+</div>
+</div>
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+</div>
+<div class="detail" data-ice="detail">
   <h3 data-ice="anchor" id="instance-method-watch">
     <span class="access" data-ice="access">public</span>
     
@@ -1222,7 +1314,7 @@ This class allows get, watch, etc. of sensors.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/class/sensor-handler.js.html#lineNumber67">source</a></span></span>
+      <span data-ice="source"><span><a href="file/class/sensor-handler.js.html#lineNumber70">source</a></span></span>
     </span>
   </h3>
 
@@ -1307,7 +1399,7 @@ options: {
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/class/sensor-handler.js.html#lineNumber107">source</a></span></span>
+      <span data-ice="source"><span><a href="file/class/sensor-handler.js.html#lineNumber110">source</a></span></span>
     </span>
   </h3>
 
@@ -1366,7 +1458,7 @@ options: {
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/class/sensor-handler.js.html#lineNumber235">source</a></span></span>
+      <span data-ice="source"><span><a href="file/class/sensor-handler.js.html#lineNumber250">source</a></span></span>
     </span>
   </h3>
 
@@ -1422,7 +1514,7 @@ options: {
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/class/sensor-handler.js.html#lineNumber316">source</a></span></span>
+      <span data-ice="source"><span><a href="file/class/sensor-handler.js.html#lineNumber331">source</a></span></span>
     </span>
   </h3>
 
@@ -1495,7 +1587,7 @@ Stringifies data and logs.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/class/sensor-handler.js.html#lineNumber291">source</a></span></span>
+      <span data-ice="source"><span><a href="file/class/sensor-handler.js.html#lineNumber306">source</a></span></span>
     </span>
   </h3>
 
@@ -1568,7 +1660,7 @@ Stringifies data and logs.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/class/sensor-handler.js.html#lineNumber301">source</a></span></span>
+      <span data-ice="source"><span><a href="file/class/sensor-handler.js.html#lineNumber316">source</a></span></span>
     </span>
   </h3>
 
@@ -1641,7 +1733,7 @@ Stringifies data and logs.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/class/sensor-handler.js.html#lineNumber254">source</a></span></span>
+      <span data-ice="source"><span><a href="file/class/sensor-handler.js.html#lineNumber269">source</a></span></span>
     </span>
   </h3>
 

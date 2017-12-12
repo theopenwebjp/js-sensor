@@ -1,9 +1,51 @@
-/**
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href="../../">
+  <title data-ice="title">class/browser-sensor-watcher.js | js-sensor</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  <script src="script/manual.js"></script>
+<meta name="description" content="JavaScript sensor library for native input sensors."><meta property="twitter:card" content="summary"><meta property="twitter:title" content="js-sensor"><meta property="twitter:description" content="JavaScript sensor library for native input sensors."></head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./">Home</a>
+  
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  <a href="test.html" data-ice="testLink">Test</a>
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+</header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/class/browser-sensor-watcher.js~BrowserSensorWatcher.html">BrowserSensorWatcher</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/class/js-sensor.js~JsSensor.html">JsSensor</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/class/sensor-handler.js~SensorHandler.html">SensorHandler</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-SensorHandler">SensorHandler</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-BrowserSensorWatcher">BrowserSensorWatcher</a></span></span></li>
+</ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><h1 data-ice="title">class/browser-sensor-watcher.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">/**
+ * Collection of browser based sensor events.
  * Sensors should be continuous events.
  * Therefor each should be setup in similar way using an event listener.
  * Objects of events, arguments and implementations may differ.
  */
-class RawSensorWatcher {
+class BrowserSensorWatcher {
 
     constructor(){
         /**
@@ -22,19 +64,19 @@ class RawSensorWatcher {
              * @return {SensorListener}
              */
             watchPosition: {
-                start: (options)=>{
+                start: (options)=&gt;{
                     let eventListener = options.events.data;
-                    return new Promise((resolve, reject)=>{
+                    return new Promise((resolve, reject)=&gt;{
                         let id = navigator.geolocation.watchPosition(
                             eventListener,
-                            (err)=>{
-                                return reject(console.error('Failed watchPosition', err));
+                            (err)=&gt;{
+                                return reject(console.error(&apos;Failed watchPosition&apos;, err));
                             }
                         );
                         resolve([id]);
                     });
                 },
-                stop: (id)=>{navigator.geolocation.clearWatch(id); return Promise.resolve();}
+                stop: (id)=&gt;{navigator.geolocation.clearWatch(id); return Promise.resolve();}
             },
 
             /**
@@ -45,24 +87,24 @@ class RawSensorWatcher {
              * @return {SensorListener}
              */
             getUserMedia: {
-                start: (options)=>{
+                start: (options)=&gt;{
                     let eventListener = options.events.data;
                     return navigator.mediaDevices.getUserMedia({audio: true, video: true})
-                    .then((stream)=>{
+                    .then((stream)=&gt;{
                         /*
                         //MediaRecorder API. Preferred but ondataavailable seems unreliable.
                         let recorder = new MediaRecorder(stream);
-                        let onDataAvailable = function(ev){console.log("WORKED");
+                        let onDataAvailable = function(ev){console.log(&quot;WORKED&quot;);
                         eventListener(ev.data);
                         };
-                        //recorder.addEventListener('dataavailable', onDataAvailable);
+                        //recorder.addEventListener(&apos;dataavailable&apos;, onDataAvailable);
                         recorder.ondataavailable = onDataAvailable;
                         recorder.start();
                         */
 
                         //Basic interval
                         let url = window.URL.createObjectURL(stream);
-                        let video = document.createElement('video');
+                        let video = document.createElement(&apos;video&apos;);
                         video.autoplay = true;
                         video.src = url;
 
@@ -75,10 +117,10 @@ class RawSensorWatcher {
                             recorder.interval = window.setInterval(recorder.handleData, 500);
                         };
                         recorder.handleData = function(){
-                            let canvas = document.createElement('canvas');
+                            let canvas = document.createElement(&apos;canvas&apos;);
                             canvas.width = video.videoWidth;
                             canvas.height = video.videoHeight;
-                            let ctx = canvas.getContext('2d');
+                            let ctx = canvas.getContext(&apos;2d&apos;);
                             ctx.drawImage(video, 0, 0);
 
                             recorder.ondataavailable({
@@ -95,7 +137,7 @@ class RawSensorWatcher {
                         return Promise.resolve([stream, recorder]);
                     });
                 },
-                stop: (stream, recorder)=>{recorder.stop(); let tracks = stream.getTracks(); tracks.map((track)=>{track.stop();}); return Promise.resolve();}
+                stop: (stream, recorder)=&gt;{recorder.stop(); let tracks = stream.getTracks(); tracks.map((track)=&gt;{track.stop();}); return Promise.resolve();}
             },
 
             /**
@@ -103,28 +145,28 @@ class RawSensorWatcher {
              * @see https://developer.mozilla.org/en-US/docs/Web/Events/deviceorientation
              * @return {SensorListener}
              */
-            deviceOrientation: this._getWindowEventListenerObject('deviceorientation'),
+            deviceOrientation: this._getWindowEventListenerObject(&apos;deviceorientation&apos;),
             
             /**
              * Device light(lux)
              * @see https://developer.mozilla.org/en-US/docs/Web/API/DeviceLightEvent
              * @return {SensorListener}
              */
-            deviceLight: this._getWindowEventListenerObject('devicelight'),
+            deviceLight: this._getWindowEventListenerObject(&apos;devicelight&apos;),
             
             /**
              * Device proximity(cm)
              * @see https://developer.mozilla.org/en-US/docs/Web/Events/deviceproximity
              * @return {SensorListener}
              */
-            deviceProximity: this._getWindowEventListenerObject('deviceproximity'),
+            deviceProximity: this._getWindowEventListenerObject(&apos;deviceproximity&apos;),
             
             /**
              * Device motion(acceleration + rotation. Can use for measuring path taken.)
              * @see https://developer.mozilla.org/en-US/docs/Web/Events/devicemotion
              * @return {SensorListener}
              */
-            deviceMotion: this._getWindowEventListenerObject('devicemotion'),
+            deviceMotion: this._getWindowEventListenerObject(&apos;devicemotion&apos;),
             
             /**
              * Test use only.
@@ -144,9 +186,9 @@ class RawSensorWatcher {
      */
     SensorListener(){
         return {
-            start: ()=>{},
-            stop: ()=>{},
-            check: ()=>{return true;}
+            start: ()=&gt;{},
+            stop: ()=&gt;{},
+            check: ()=&gt;{return true;}
         };
     }
 
@@ -160,18 +202,18 @@ class RawSensorWatcher {
         return {
             start: function(options){
                 let eventListener = options.events.data;
-                return new Promise((resolve, reject)=>{
+                return new Promise((resolve, reject)=&gt;{
                     window.addEventListener(eventName, eventListener);
                     resolve([eventName, eventListener]);
                 }); 
             },
             stop: function(eventName, eventListener){
-                return new Promise((resolve, reject)=>{
+                return new Promise((resolve, reject)=&gt;{
                     window.removeEventListener(eventName, eventListener);
                     resolve();
                 });
             },
-            check: ()=>{return true;}
+            check: ()=&gt;{return true;}
         };
     }
 
@@ -185,16 +227,16 @@ class RawSensorWatcher {
         return {
             start: function(options){
                 let eventListener = options.events.data;
-                return new Promise((resolve, reject)=>{
-                    let id = window.setInterval(()=>{
-                        eventListener('test data');
+                return new Promise((resolve, reject)=&gt;{
+                    let id = window.setInterval(()=&gt;{
+                        eventListener(&apos;test data&apos;);
                     }, 500);
 
                     resolve([id]);
                 });
             },
             stop: function(id){
-                return new Promise((resolve, reject)=>{
+                return new Promise((resolve, reject)=&gt;{
                     window.clearTimeout(id);
                     resolve();
                 });
@@ -206,4 +248,20 @@ class RawSensorWatcher {
     }
 }
 
-module.exports = RawSensorWatcher;
+module.exports = BrowserSensorWatcher;</code></pre>
+
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(1.0.4)</span><img src="./image/esdoc-logo-mini-black.png"></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>

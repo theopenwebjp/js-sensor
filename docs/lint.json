@@ -1,1 +1,50 @@
-[]
+[
+  {
+    "name": "SensorHandler#updateSensorListeners",
+    "filePath": "class/sensor-handler.js",
+    "lines": [
+      {
+        "lineNumber": 224,
+        "line": "    /**\r"
+      },
+      {
+        "lineNumber": 225,
+        "line": "     * Update registered sensor listeners.\r"
+      },
+      {
+        "lineNumber": 226,
+        "line": "     * Pass handle with one argument.\r"
+      },
+      {
+        "lineNumber": 227,
+        "line": "     * MUST return.\r"
+      },
+      {
+        "lineNumber": 228,
+        "line": "     * Dynamic updating during watching may result in bugs.\r"
+      },
+      {
+        "lineNumber": 229,
+        "line": "     * \r"
+      },
+      {
+        "lineNumber": 230,
+        "line": "     * @param {Function} handle handle taking object map of registered SensorListeners \r"
+      },
+      {
+        "lineNumber": 231,
+        "line": "     */\r"
+      },
+      {
+        "lineNumber": 232,
+        "line": "    updateSensorListeners(callback){\r"
+      }
+    ],
+    "codeParams": [
+      "callback"
+    ],
+    "docParams": [
+      "handle"
+    ]
+  }
+]

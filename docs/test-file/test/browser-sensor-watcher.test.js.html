@@ -2,8 +2,8 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <base data-ice="baseUrl">
-  <title data-ice="title">Home | js-sensor</title>
+  <base data-ice="baseUrl" href="../../">
+  <title data-ice="title">test/browser-sensor-watcher.test.js | js-sensor</title>
   <link type="text/css" rel="stylesheet" href="css/style.css">
   <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
   <script src="script/prettify/prettify.js"></script>
@@ -38,80 +38,22 @@
 </div>
 </nav>
 
-<div class="content" data-ice="content"><div data-ice="index" class="github-markdown"><h1 id="js-sensor">JS Sensor</h1><p> Sensor watcher of JavaScript sensor events.
- This module is designed to have only basic functionality.
- Any more complex functionality should be achieved through extending this module.</p>
-<h2 id="environment">Environment</h2><p> Should work and be extensible using any new JavaScript environment(node, browser).
- Default event listeners provided via browser-sensor-watcher.
- Possible to use own via extension.</p>
-<h2 id="installation">Installation</h2><ol>
-<li>Install node(including npm)</li>
-<li><p>&quot;npm install&quot; in base directory</p>
-<h2 id="usage">Usage</h2><p>The full api can be checked from the documentation. See &quot;Documentation&quot; below.</p>
-<p>Basic usage can be seen below:</p>
-<pre><code><code class="source-code prettyprint">const jsSensor = new require(&apos;js-sensor&apos;);
+<div class="content" data-ice="content"><h1 data-ice="title">test/browser-sensor-watcher.test.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">const BrowserSensorWatcher = require(&apos;../class/browser-sensor-watcher&apos;);
 
-//Get sensor list
-console.log(&apos;names:&apos; jsSensor.getMappedSensorNames());
+const browserSensorWatcher = new BrowserSensorWatcher();
 
-//Update/extend
-jsSensor.updateSensorListeners((sensorListenerMap)=&gt;{
- sensorListenerMap[&apos;myListener&apos;] = {
-     start: (options)=&gt;{
-         const data = &apos;...HANDLE HERE&apos;;
-         options.events.data(data);
-     },
-     stop: ()=&gt;{
-         //STOP
-     },
-     check: ()=&gt;{
-         //CHECK FOR AVAILABILITY
-         return true;
-     }
- };
- return sensorListenerMap;
-});
+describe(&apos;BrowserSensorWatcher&apos;, ()=&gt;{
+    it(&apos;_getWindowEventListenerObject&apos;, ()=&gt;{
+        let object = browserSensorWatcher._getWindowEventListenerObject(&apos;devicemotion&apos;);
 
-//Get
-jsSensor.get(&apos;deviceMotion&apos;)
-.then((data)=&gt;{
- console.log(&apos;get&apos;, data);
-});
+        chai.expect(object).to.be.an(&apos;object&apos;);
+        chai.expect(object).to.have.property(&apos;start&apos;);
+        chai.expect(object).to.have.property(&apos;stop&apos;);
+        chai.expect(object).to.have.property(&apos;check&apos;);
+    });
+});</code></pre>
 
-//Watch
-jsSensor.watch(&apos;deviceOrientation&apos;,
-{
- events: {
-     data: (data)=&gt;{
-         console.log(&apos;watch&apos;, data);
-     }
- }
-});
-
-//Stop
-jsSensor.stop(&apos;deviceOrientation);
-
-//WatchAll
-jsSensor.watchAll();
-//...wait a while
-//StopAll
-jsSensor.stopAll()</code>
-</code></pre><h2 id="events">Events</h2></li>
-<li>watchPosition</li>
-<li>getUserMedia</li>
-<li>deviceOrientation</li>
-<li>deviceLight</li>
-<li>deviceProximity</li>
-<li>deviceMotion</li>
-<li><p>test</p>
-<h2 id="tests">Tests</h2><p>Run <code>npm run test</code></p>
-<h2 id="reports">Reports</h2></li>
-<li>Built when running tests.</li>
-<li><p>Eslint</p>
-<h2 id="documentation">Documentation</h2></li>
-<li>Esdoc(./docs/)</li>
-</ol>
-</div>
 </div>
 
 <footer class="footer">

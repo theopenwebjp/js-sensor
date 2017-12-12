@@ -3,6 +3,11 @@
  This module is designed to have only basic functionality.
  Any more complex functionality should be achieved through extending this module.
 
+ ## Environment
+ Should work and be extensible using any new JavaScript environment(node, browser).
+ Default event listeners provided via browser-sensor-watcher.
+ Possible to use own via extension.
+
  ## Installation
  1. Install node(including npm)
  2. "npm install" in base directory
