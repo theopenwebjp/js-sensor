@@ -40,63 +40,121 @@ class BrowserSensorWatcher {
 
             /**
              * Gets camera and audio and records
-             * data: image dataURL
+             * data:
+             * 1. stream: returns stream once(FASTEST)
+             * 2. image: returns each image frame({video, canvas, context, stream})
+             * 3. details: returns {video, canvas, context, stream}
              * 
              * @see https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia
              * @return {SensorListener}
              */
             getUserMedia: {
                 start: (options)=>{
-                    let eventListener = options.events.data;
                     return navigator.mediaDevices.getUserMedia({audio: true, video: true})
                     .then((stream)=>{
-                        /*
-                        //MediaRecorder API. Preferred but ondataavailable seems unreliable.
-                        let recorder = new MediaRecorder(stream);
-                        let onDataAvailable = function(ev){console.log("WORKED");
-                        eventListener(ev.data);
-                        };
-                        //recorder.addEventListener('dataavailable', onDataAvailable);
-                        recorder.ondataavailable = onDataAvailable;
-                        recorder.start();
-                        */
+                        const mode = options.mode || 'stream';//String for existing handle OR function for custom.
 
-                        //Basic interval
-                        let url = window.URL.createObjectURL(stream);
-                        let video = document.createElement('video');
-                        video.autoplay = true;
-                        video.src = url;
+                        const _streamToVideo = (stream)=>{
+                            let url = window.URL.createObjectURL(stream);
+                            let video = document.createElement('video');
+                            video.autoplay = true;
+                            video.src = url;
 
-                        let recorder = {};
-                        recorder.interval = null;
-                        recorder.ondataavailable = function(ev){
-                            eventListener(ev.data);
+                            return video;
                         };
-                        recorder.start = function(){
-                            recorder.interval = window.setInterval(recorder.handleData, 500);
-                        };
-                        recorder.handleData = function(){
-                            let canvas = document.createElement('canvas');
+
+                        /**
+                         * Returns stream as data once.
+                         * For simple handling.
+                         * @param {MediaStream} stream 
+                         * @param {Object} options 
+                         */
+                        const streamGrabber = (stream, options)=>{
+                            let eventListener = options.events.data;
+                            eventListener(stream);
+                        }
+
+                        const detailsGrabber = (stream, options)=>{
+                            let eventListener = options.events.data;
+                            
+                            let video = _streamToVideo(stream);
+                            
+                            const canvas = document.createElement('canvas');
                             canvas.width = video.videoWidth;
                             canvas.height = video.videoHeight;
-                            let ctx = canvas.getContext('2d');
-                            ctx.drawImage(video, 0, 0);
+                            const ctx = canvas.getContext('2d');
+                            
+                            const state = {
+                                canvas: canvas,
+                                context: ctx,
+                                video: video,
+                                stream: stream
+                            };
 
-                            recorder.ondataavailable({
-                                data: canvas.toDataURL()
-                            });
-                        };
-                        recorder.stop = function(){
-                            window.URL.revokeObjectURL(url);
-                            window.clearTimeout(recorder.interval);
-                            recorder.interval = null;
-                        };
-                        recorder.start();
+                            eventListener(state);
+                        }
 
-                        return Promise.resolve([stream, recorder]);
+                        /**
+                         * Returns each frame
+                         * @param {MediaStream} stream
+                         * @param {Object} options
+                         */
+                        const createImageGrabber = (stream, options)=>{
+                            let eventListener = options.events.data;
+                            
+                            let video = _streamToVideo(stream);
+
+                            //Initialization
+                            const canvas = document.createElement('canvas');
+                            const state = {
+                                canvas: canvas,
+                                context: ctx,
+                                video: video,
+                                stream: stream
+                            };
+
+                            const onFrame = ()=>{
+                                canvas.width = video.videoWidth;
+                                canvas.height = video.videoHeight;
+                                const ctx = canvas.getContext('2d');
+                                ctx.drawImage(video, 0, 0);
+
+                                eventListener(state);
+                            };
+                            video.addEventListener('frame', onFrame);
+
+                            return {
+                                stop: ()=>{video.removeEventListener('frame', onFrame);},
+                                state: state
+                            };
+                        };
+
+                        const handleMap = {
+                            stream: streamGrabber,
+                            details: detailsGrabber,
+                            image: createImageGrabber
+                        };
+
+                        const handle = typeof mode === 'function' ? mode : handleMap[mode];
+                        const commonObject = {
+                            handler: handle()
+                        };
+                        
+                        return Promise.resolve([stream, commonObject]);
                     });
                 },
-                stop: (stream, recorder)=>{recorder.stop(); let tracks = stream.getTracks(); tracks.map((track)=>{track.stop();}); return Promise.resolve();}
+                stop: (stream, commonObject)=>{
+                    
+                    //Stop object
+                    if(commonObject.handler && commonObject.handler.stop){
+                        commonObject.handler.stop();
+                    }
+                    
+                    //Stop stream
+                    let tracks = stream.getTracks();
+                    tracks.forEach((track)=>{track.stop();});
+                    return Promise.resolve();
+                }
             },
 
             /**
