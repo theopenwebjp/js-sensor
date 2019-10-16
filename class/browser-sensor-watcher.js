@@ -200,6 +200,7 @@ class BrowserSensorWatcher {
      * start: Starts watching sensor
      * stop: Stops watching sensor
      * check: Checks for support
+     * @return {object}
      */
     SensorListener(){
         return {

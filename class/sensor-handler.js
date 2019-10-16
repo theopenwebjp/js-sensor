@@ -28,7 +28,8 @@ class SensorHandler {
     /**
      * Get sensor once. Should stop watching sensor if newly made.
      * 
-     * @param {string} sensorName 
+     * @param {string} sensorName
+     * @return {Promise}
      */
     get(sensorName){
         let self = this;
