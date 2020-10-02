@@ -1,5 +1,27 @@
 const BrowserSensorWatcher = require('./browser-sensor-watcher');
+/**
+ * @type {BrowserSensorWatcher}
+ */
 let rawSensorWatcher;
+
+/**
+ * @typedef {Object} SensorState
+ */
+
+/**
+ * @typedef {Object<string, function>} SensorEvents
+ */
+
+/**
+ * @typedef {Object} WatchOptions
+ * @property {SensorEvents} events
+ */
+
+/**
+ * Other keys mapped to sensor state.
+ * @typedef {Object<string, *>} SensorStateSettings
+ * @property {WatchOptions} options
+ */
 
 /**
  * Main class for handling sensors.
@@ -7,21 +29,27 @@ let rawSensorWatcher;
  */
 class SensorHandler {
 
-    constructor(env='browser'){
+    constructor(env = 'browser') {
 
-        //Override with updateSensorListeners
-        if(env === 'browser'){
+        // Override with updateSensorListeners
+        if (env === 'browser') {
             rawSensorWatcher = this.rawSensorWatcher = new BrowserSensorWatcher();
         }
 
-        //SensorState mapped by sensor name
+        /**
+         * SensorState mapped by sensor name
+         * @type {Object<string, SensorState>}
+         */
         this.sensors = {
             //
         };
 
-        //Sensor counts stored accross start and stop watching to make sure async starting and stopping doesn't cause bugs.
+        /**
+         * Sensor counts stored accross start and stop watching to make sure async starting and stopping doesn't cause bugs.
+         * @type {Object<string, number>}
+         */
         this.sensorCreationCounts = {
-           // 
+            // 
         };
     }
 
@@ -29,22 +57,25 @@ class SensorHandler {
      * Get sensor once. Should stop watching sensor if newly made.
      * 
      * @param {string} sensorName
-     * @return {Promise}
+     * @return {Promise<SensorState>}
      */
-    get(sensorName){
+    get(sensorName) {
         let self = this;
-        return new Promise((resolve, reject)=>{
+        return new Promise((resolve) => {
             let sensorCreationCount = self._getSensorCreationCount() + 1;
-            let handle = (sensorState)=>{
+            /**
+             * @param {SensorState} sensorState 
+             */
+            let handle = (sensorState) => {
                 //resolve(sensorState);
 
                 //Only stop if no new watches happened.
-                if(!(self._getSensorCreationCount() > sensorCreationCount)){
+                if (!(self._getSensorCreationCount() > sensorCreationCount)) {
                     self.stop(sensorName)
-                    .then(()=>{
-                        resolve(sensorState);
-                    });
-                }else{
+                        .then(() => {
+                            resolve(sensorState);
+                        });
+                } else {
                     resolve(sensorState);
                 }
             };
@@ -65,39 +96,42 @@ class SensorHandler {
      * }
      * 
      * @param {string} sensorName
-     * @param {object} options optional options
-     * @return {promise} promise resolving SensorState
+     * @param {Partial<WatchOptions>} options optional options
+     * @return {Promise} promise resolving SensorState
      */
-    watch(sensorName, options={}){
+    watch(sensorName, options = {}) {
         const self = this;
-        
+
         //data required(use console log if nothing)
-        if(!options.events){options.events = {};}
-        if(!options.events.data){options.events.data = this._getDefaultDataEvent(sensorName);}
+        if (!options.events) { options.events = {}; }
+        if (!options.events.data) { options.events.data = this._getDefaultDataEvent(sensorName); }
 
-        return new Promise((resolve, reject)=>{
+        return new Promise((resolve, reject) => {
 
-            const onResolve = (sensorState)=>{
+            /**
+             * @param {SensorState} sensorState 
+             */
+            const onResolve = (sensorState) => {
                 self._incSensorCreationCount(sensorName);
                 resolve(sensorState);
             };
 
-            if(self.sensors[sensorName]){
+            if (self.sensors[sensorName]) {
                 return onResolve(self.sensors[sensorName]);
             }
 
-            if(rawSensorWatcher.sensorHandles[sensorName]){
+            if (rawSensorWatcher.sensorHandles[sensorName]) {
                 rawSensorWatcher.sensorHandles[sensorName].start(options)
-                .then(function(startReturnData){
-                    let sensorState = self._setSensorState(sensorName, {
-                        options: options,
-                        startReturnData: startReturnData,
-                        stop: rawSensorWatcher.sensorHandles[sensorName].stop//Set to state because may implement multiple watching later.
-                    });
-                    return onResolve(sensorState);
-                })
-                .catch(reject);
-            }else{
+                    .then(function (startReturnData) {
+                        let sensorState = self._setSensorState(sensorName, {
+                            options: options,
+                            startReturnData: startReturnData,
+                            stop: rawSensorWatcher.sensorHandles[sensorName].stop//Set to state because may implement multiple watching later.
+                        });
+                        return onResolve(sensorState);
+                    })
+                    .catch(reject);
+            } else {
                 return reject(new Error('No raw sensor: ' + sensorName));
             }
         });
@@ -106,19 +140,19 @@ class SensorHandler {
     /**
      * Watches all available sensors.
      * 
-     * @return {promise} Resolves array of SensorStates. However allows for failing returning null.
+     * @return {Promise<SensorState[]>} Resolves array of SensorStates. However allows for failing returning null.
      */
-    watchAll(){
+    watchAll() {
         let possibleSensors = rawSensorWatcher.sensorHandles;
         let promises = [];
-        for(let key in possibleSensors){
-            if(key === 'test'){continue;}
-            let p = new Promise((resolve, reject)=>{
+        for (let key in possibleSensors) {
+            if (key === 'test') { continue; }
+            let p = new Promise((resolve) => {
                 this.watch(key)
-                .then(resolve)
-                .catch(()=>{
-                    resolve(null);
-                });
+                    .then(resolve)
+                    .catch(() => {
+                        resolve(null);
+                    });
             });
             promises.push(p);
         }
@@ -130,26 +164,26 @@ class SensorHandler {
      * Stops watching sensor.
      * 
      * @param {string} sensorName
-     * @return {promise}
+     * @return {Promise}
      */
-    stop(sensorName){
+    stop(sensorName) {
         let self = this;
-        return new Promise((resolve, reject)=>{
+        return new Promise((resolve, reject) => {
             let sensor = self.sensors[sensorName];
-            if(!sensor){
+            if (!sensor) {
                 reject(new Error('No sensor: ' + sensorName));
             }
 
-            if(sensor.stop){
+            if (sensor.stop) {
                 sensor.stop(...sensor.startReturnData)
-                .then(()=>{
-                    delete self.sensors[sensorName];
-                    console.log('sensor stop success: ' + sensorName);
+                    .then(() => {
+                        delete self.sensors[sensorName];
+                        console.log('sensor stop success: ' + sensorName);
 
-                    resolve(sensor);
-                })
-                .catch(reject);
-            }else{
+                        resolve(sensor);
+                    })
+                    .catch(reject);
+            } else {
                 reject(new Error('No sensor stop handle: ' + sensorName));
             }
         });
@@ -158,11 +192,14 @@ class SensorHandler {
     /**
      * Stops watching all.
      * 
-     * @return {promise}
+     * @return {Promise}
      */
-    stopAll(){
-        let promises = [];
-        for(let key in this.sensors){
+    stopAll() {
+        /**
+         * @type {Promise[]}
+         */
+        const promises = [];
+        for (let key in this.sensors) {
             promises.push(this.stop(key));
         }
 
@@ -177,16 +214,16 @@ class SensorHandler {
      * @param {function} handle
      * @return {boolean} success/failure  
      */
-    addSensorEvent(sensorName, eventName, handle){
+    addSensorEvent(sensorName, eventName, handle) {
 
         //Require started
         let sensor = this.sensors[sensorName];
-        if(!sensor){
+        if (!sensor) {
             return false;
         }
-        
+
         let events = sensor.events;
-        if(!events[eventName]){
+        if (!events[eventName]) {
             events[eventName] = [];
         }
 
@@ -203,22 +240,22 @@ class SensorHandler {
      * @param {function} handle
      * @return {boolean} success/failure 
      */
-    removeSensorEvent(sensorName, eventName, handle){
+    removeSensorEvent(sensorName, eventName, handle) {
 
         //No sensor or event
         let sensor = this.sensors[sensorName];
-        if(!sensor || !sensor.events[eventName]){
+        if (!sensor || !sensor.events[eventName]) {
             return false;
         }
 
         let event = sensor.events[eventName];
         let index = event.indexOf(handle);
 
-        if(index >= 0){
+        if (index >= 0) {
             event.splice(index, 1);
 
             return true;
-        }else{
+        } else {
             return false;
         }
     }
@@ -231,7 +268,7 @@ class SensorHandler {
      * 
      * @param {Function} handle handle taking object map of registered SensorListeners 
      */
-    updateSensorListeners(callback){
+    updateSensorListeners(callback) {
         this.rawSensorWatcher = callback(this.rawSensorWatcher);
     }
 
@@ -240,7 +277,7 @@ class SensorHandler {
      * 
      * @return {array} sensor names
      */
-    getMappedSensorNames(){
+    getMappedSensorNames() {
         return Object.keys(this.rawSensorWatcher.sensorHandles);
     }
 
@@ -248,7 +285,7 @@ class SensorHandler {
      * Current state of sensor
      * @return {SensorState}
      */
-    _SensorState(){
+    _SensorState() {
         return {
             isSensorState: true,
             name: '',
@@ -265,29 +302,32 @@ class SensorHandler {
      * Sets sensor state. Requires settings.events.
      * 
      * @param {string} sensorName 
-     * @param {object} settings 
+     * @param {SensorStateSettings} settings 
      */
-    _setSensorState(sensorName, settings={}){
+    _setSensorState(sensorName, settings = {}) {
         console.log('_setSensorState: ', sensorName, settings);
 
+        /**
+         * @type {SensorState|undefined}
+         */
         let sensorState;
-        if(this.sensors[sensorName]){
+        if (this.sensors[sensorName]) {
             sensorState = this.sensors[sensorName];
-        }else{
+        } else {
             sensorState = this._SensorState();
             sensorState.name = sensorName;
 
             this.sensors[sensorName] = sensorState;
 
             let key;
-            for(key in settings){
+            for (key in settings) {
                 sensorState[key] = settings[key];
             }
 
             //Events
             let options = settings.options;
-            if(options.events){
-                for(key in options.events){
+            if (options.events) {
+                for (key in options.events) {
                     this.addSensorEvent(sensorName, key, options.events[key]);
                 }
             }
@@ -304,7 +344,7 @@ class SensorHandler {
      * @param {String} sensorName 
      * @return {Number} sensor creation count
      */
-    _getSensorCreationCount(sensorName){
+    _getSensorCreationCount(sensorName = '') {
         return (!!this.sensorCreationCounts[sensorName]) ? this.sensorCreationCounts[sensorName] : 0;
     }
 
@@ -314,8 +354,8 @@ class SensorHandler {
      * @param {String} sensorName 
      * @return {Number} sensor creation count
      */
-    _incSensorCreationCount(sensorName){
-        if(!Number.isInteger(this.sensorCreationCounts[sensorName])){
+    _incSensorCreationCount(sensorName) {
+        if (!Number.isInteger(this.sensorCreationCounts[sensorName])) {
             this.sensorCreationCounts[sensorName] = 0;
         }
 
@@ -329,16 +369,16 @@ class SensorHandler {
      * @param {String} sensorName 
      * @return {Function}
      */
-    _getDefaultDataEvent(sensorName){
-        return (data)=>{
-            if(data && typeof data === 'object'){
+    _getDefaultDataEvent(sensorName) {
+        return (data) => {
+            if (data && typeof data === 'object') {
                 let oldData = data;
                 let cache = [];
-                data = JSON.stringify(data, function(key, val){
-                    if(val && typeof val === 'object'){
+                data = JSON.stringify(data, function (key, val) {
+                    if (val && typeof val === 'object') {
 
                         //Ignore duplicates
-                        if(cache.indexOf(val) >= 0){
+                        if (cache.indexOf(val) >= 0) {
                             return;
                         }
 

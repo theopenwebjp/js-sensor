@@ -6,7 +6,7 @@
  */
 class BrowserSensorWatcher {
 
-    constructor(){
+    constructor() {
         /**
          * All sensor handles must return promise and take no arguments.
          * start: required. args: (optional options object) should resolve an array with arguments to be passed to stop.
@@ -14,7 +14,7 @@ class BrowserSensorWatcher {
          * check: optional.
          */
         this.sensorHandles = {
-            
+
             /**
              * Watch GPS position
              * data: https://developer.mozilla.org/en-US/docs/Web/API/Position
@@ -23,19 +23,25 @@ class BrowserSensorWatcher {
              * @return {SensorListener}
              */
             watchPosition: {
-                start: (options)=>{
+                /**
+                 * @param {Object} options
+                 */
+                start: (options) => {
                     let eventListener = options.events.data;
-                    return new Promise((resolve, reject)=>{
+                    return new Promise((resolve, reject) => {
                         let id = navigator.geolocation.watchPosition(
                             eventListener,
-                            (err)=>{
+                            (err) => {
                                 return reject(console.error('Failed watchPosition', err));
                             }
                         );
                         resolve([id]);
                     });
                 },
-                stop: (id)=>{navigator.geolocation.clearWatch(id); return Promise.resolve();}
+                /**
+                 * @param {number} id
+                 */
+                stop: (id) => { navigator.geolocation.clearWatch(id); return Promise.resolve(); }
             },
 
             /**
@@ -49,110 +55,124 @@ class BrowserSensorWatcher {
              * @return {SensorListener}
              */
             getUserMedia: {
-                start: (options)=>{
-                    return navigator.mediaDevices.getUserMedia({audio: true, video: true})
-                    .then((stream)=>{
-                        const mode = options.mode || 'stream';//String for existing handle OR function for custom.
+                /**
+                 * @param {Object} options
+                 */
+                start: (options) => {
+                    return navigator.mediaDevices.getUserMedia({ audio: true, video: true })
+                        .then((stream) => {
+                            const mode = options.mode || 'stream';//String for existing handle OR function for custom.
 
-                        const _streamToVideo = (stream)=>{
-                            let url = window.URL.createObjectURL(stream);
-                            let video = document.createElement('video');
-                            video.autoplay = true;
-                            video.src = url;
+                            /**
+                             * @param {MediaStream} stream 
+                             */
+                            const _streamToVideo = (stream) => {
+                                let url = window.URL.createObjectURL(stream);
+                                let video = document.createElement('video');
+                                video.autoplay = true;
+                                video.src = url;
 
-                            return video;
-                        };
-
-                        /**
-                         * Returns stream as data once.
-                         * For simple handling.
-                         * @param {MediaStream} stream 
-                         * @param {Object} options 
-                         */
-                        const streamGrabber = (stream, options)=>{
-                            let eventListener = options.events.data;
-                            eventListener(stream);
-                        }
-
-                        const detailsGrabber = (stream, options)=>{
-                            let eventListener = options.events.data;
-                            
-                            let video = _streamToVideo(stream);
-                            
-                            const canvas = document.createElement('canvas');
-                            canvas.width = video.videoWidth;
-                            canvas.height = video.videoHeight;
-                            const ctx = canvas.getContext('2d');
-                            
-                            const state = {
-                                canvas: canvas,
-                                context: ctx,
-                                video: video,
-                                stream: stream
+                                return video;
                             };
 
-                            eventListener(state);
-                        }
+                            /**
+                             * Returns stream as data once.
+                             * For simple handling.
+                             * @param {MediaStream} stream 
+                             * @param {Object} options 
+                             */
+                            const streamGrabber = (stream, options) => {
+                                let eventListener = options.events.data;
+                                eventListener(stream);
+                            }
 
-                        /**
-                         * Returns each frame
-                         * @param {MediaStream} stream
-                         * @param {Object} options
-                         */
-                        const createImageGrabber = (stream, options)=>{
-                            let eventListener = options.events.data;
-                            
-                            let video = _streamToVideo(stream);
+                            /**
+                             * @param {MediaStream} stream 
+                             * @param {Object} options 
+                             */
+                            const detailsGrabber = (stream, options) => {
+                                let eventListener = options.events.data;
 
-                            //Initialization
-                            const canvas = document.createElement('canvas');
-                            const state = {
-                                canvas: canvas,
-                                context: ctx,
-                                video: video,
-                                stream: stream
-                            };
+                                let video = _streamToVideo(stream);
 
-                            const onFrame = ()=>{
+                                const canvas = document.createElement('canvas');
                                 canvas.width = video.videoWidth;
                                 canvas.height = video.videoHeight;
                                 const ctx = canvas.getContext('2d');
-                                ctx.drawImage(video, 0, 0);
+
+                                const state = {
+                                    canvas: canvas,
+                                    context: ctx,
+                                    video: video,
+                                    stream: stream
+                                };
 
                                 eventListener(state);
+                            }
+
+                            /**
+                             * Returns each frame
+                             * @param {MediaStream} stream
+                             * @param {Object} options
+                             */
+                            const createImageGrabber = (stream, options) => {
+                                let eventListener = options.events.data;
+
+                                let video = _streamToVideo(stream);
+
+                                //Initialization
+                                const canvas = document.createElement('canvas');
+                                const ctx = notFalsy(canvas.getContext('2d'));
+                                const state = {
+                                    canvas: canvas,
+                                    context: ctx,
+                                    video: video,
+                                    stream: stream
+                                };
+
+                                const onFrame = () => {
+                                    canvas.width = video.videoWidth;
+                                    canvas.height = video.videoHeight;
+                                    ctx.drawImage(video, 0, 0);
+
+                                    eventListener(state);
+                                };
+                                video.addEventListener('frame', onFrame);
+
+                                return {
+                                    stop: () => { video.removeEventListener('frame', onFrame); },
+                                    state: state
+                                };
                             };
-                            video.addEventListener('frame', onFrame);
 
-                            return {
-                                stop: ()=>{video.removeEventListener('frame', onFrame);},
-                                state: state
+                            const handleMap = {
+                                stream: streamGrabber,
+                                details: detailsGrabber,
+                                image: createImageGrabber
                             };
-                        };
 
-                        const handleMap = {
-                            stream: streamGrabber,
-                            details: detailsGrabber,
-                            image: createImageGrabber
-                        };
+                            const handle = typeof mode === 'function' ? mode : handleMap[mode];
+                            const commonObject = {
+                                handler: handle()
+                            };
 
-                        const handle = typeof mode === 'function' ? mode : handleMap[mode];
-                        const commonObject = {
-                            handler: handle()
-                        };
-                        
-                        return Promise.resolve([stream, commonObject]);
-                    });
+                            return Promise.resolve([stream, commonObject]);
+                        });
                 },
-                stop: (stream, commonObject)=>{
-                    
+                /**
+                 * @param {MediaStream} stream
+                 * @param {Object} commonObject
+                 */
+                stop: (stream, commonObject) => {
+
                     //Stop object
-                    if(commonObject.handler && commonObject.handler.stop){
+                    if (commonObject.handler && commonObject.handler.stop) {
                         commonObject.handler.stop();
                     }
-                    
+
                     //Stop stream
                     let tracks = stream.getTracks();
-                    tracks.forEach((track)=>{track.stop();});
+                    tracks.forEach((track) => { track.stop(); });
                     return Promise.resolve();
                 }
             },
@@ -163,28 +183,28 @@ class BrowserSensorWatcher {
              * @return {SensorListener}
              */
             deviceOrientation: this._getWindowEventListenerObject('deviceorientation'),
-            
+
             /**
              * Device light(lux)
              * @see https://developer.mozilla.org/en-US/docs/Web/API/DeviceLightEvent
              * @return {SensorListener}
              */
             deviceLight: this._getWindowEventListenerObject('devicelight'),
-            
+
             /**
              * Device proximity(cm)
              * @see https://developer.mozilla.org/en-US/docs/Web/Events/deviceproximity
              * @return {SensorListener}
              */
             deviceProximity: this._getWindowEventListenerObject('deviceproximity'),
-            
+
             /**
              * Device motion(acceleration + rotation. Can use for measuring path taken.)
              * @see https://developer.mozilla.org/en-US/docs/Web/Events/devicemotion
              * @return {SensorListener}
              */
             deviceMotion: this._getWindowEventListenerObject('devicemotion'),
-            
+
             /**
              * Test use only.
              * For testing when sensors might not be available.
@@ -202,11 +222,11 @@ class BrowserSensorWatcher {
      * check: Checks for support
      * @return {object}
      */
-    SensorListener(){
+    SensorListener() {
         return {
-            start: ()=>{},
-            stop: ()=>{},
-            check: ()=>{return true;}
+            start: () => { },
+            stop: () => { },
+            check: () => { return true; }
         };
     }
 
@@ -216,22 +236,29 @@ class BrowserSensorWatcher {
      * @param {String} eventName 
      * @return {SensorListener}
      */
-    _getWindowEventListenerObject(eventName){
+    _getWindowEventListenerObject(eventName) {
         return {
-            start: function(options){
+            /**
+             * @param {Object} options 
+             */
+            start: function (options) {
                 let eventListener = options.events.data;
-                return new Promise((resolve, reject)=>{
+                return new Promise((resolve, reject) => {
                     window.addEventListener(eventName, eventListener);
                     resolve([eventName, eventListener]);
-                }); 
+                });
             },
-            stop: function(eventName, eventListener){
-                return new Promise((resolve, reject)=>{
+            /**
+             * @param {string} eventName 
+             * @param {function} eventListener 
+             */
+            stop: function (eventName, eventListener) {
+                return new Promise((resolve, reject) => {
                     window.removeEventListener(eventName, eventListener);
                     resolve();
                 });
             },
-            check: ()=>{return true;}
+            check: () => { return true; }
         };
     }
 
@@ -241,25 +268,31 @@ class BrowserSensorWatcher {
      * 
      * @return {SensorListener}
      */
-    _getTestEventListenerObject(){
+    _getTestEventListenerObject() {
         return {
-            start: function(options){
+            /**
+             * @param {Object} options
+             */
+            start: function (options) {
                 let eventListener = options.events.data;
-                return new Promise((resolve, reject)=>{
-                    let id = window.setInterval(()=>{
+                return new Promise((resolve, reject) => {
+                    let id = window.setInterval(() => {
                         eventListener('test data');
                     }, 500);
 
                     resolve([id]);
                 });
             },
-            stop: function(id){
-                return new Promise((resolve, reject)=>{
+            /**
+             * @param {number} id clearTimeout id
+             */
+            stop: function (id) {
+                return new Promise((resolve, reject) => {
                     window.clearTimeout(id);
                     resolve();
                 });
             },
-            check: function(){
+            check: function () {
                 return true;
             }
         }
@@ -267,3 +300,13 @@ class BrowserSensorWatcher {
 }
 
 module.exports = BrowserSensorWatcher;
+
+/**
+ * @param {*} value TODO: Pass type through 
+ */
+function notFalsy(value) {
+    if (!value) {
+        throw new Error(`Expected ${value} to not be falsy`)
+    }
+    return value
+}
