@@ -10,6 +10,13 @@ Should work and be extensible using any new JavaScript environment(node, browser
 Default event listeners provided via browser-sensor-watcher.
 Possible to use own via extension.
 
+Currently uses Common JS due to not being limited to use on browser.
+Can load via Common JS require OR by loading pre-built /dist/bundle.js.
+
+## Build
+
+If building from source is desired OR the latest dist is not provided, building can by done via `npm run build-all`
+
 ## Installation
 
 1. Install node(including npm)
@@ -23,6 +30,7 @@ Basic usage can be seen below:
 
  ```javascript
  const jsSensor = new require('js-sensor');
+ // OR Load via script element: <script src="js-sensor/dist/bundle.js"></script>
 
  // Get sensor list
  console.log('names:' jsSensor.getMappedSensorNames());
