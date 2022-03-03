@@ -11,7 +11,8 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "importHelpers": true,
-    "removeComments": true
+    "removeComments": true,
+    "lib": ["DOM", "ES5", "ES6", "ES7"]
   },
   "include": [
     "./class/js-sensor.js"
